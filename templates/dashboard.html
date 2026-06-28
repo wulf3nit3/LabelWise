@@ -1,0 +1,2425 @@
+﻿<!DOCTYPE html>
+<html lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מאוחדת — ניהול מטופלים</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: #F0F4F8;
+    color: #1A2C3D;
+    min-height: 100vh;
+    direction: rtl;
+  }
+
+  /* ══ HEADER ══ */
+  .site-header {
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    height: 60px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.09);
+    position: sticky;
+    top: 0;
+    z-index: 200;
+  }
+  .logo-wrap { display: flex; align-items: center; gap: 10px; }
+  .logo-text { font-size: 24px; font-weight: 900; color: #29ABE2; letter-spacing: -1px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .doctor-info { text-align: right; }
+  .doctor-name { font-size: 14px; font-weight: 700; color: #1A2C3D; }
+  .doctor-role { font-size: 11px; color: #718096; margin-top: 1px; }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, #F7941D, #E07A10);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 15px; color: white; flex-shrink: 0;
+  }
+
+  /* ══ PAGE ══ */
+  .page { max-width: 1000px; margin: 0 auto; padding: 28px 20px; }
+
+  /* ══ CARD ══ */
+  .card {
+    background: white; border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+    padding: 22px 24px; margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 15px; font-weight: 800; color: #1A2C3D;
+    margin-bottom: 18px; display: flex; align-items: center; gap: 10px;
+  }
+  .card-icon {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: #FFF0E0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; flex-shrink: 0;
+  }
+
+  /* ══ AI BADGE ══ */
+  .ai-badge {
+    display: inline-flex; align-items: center;
+    background: linear-gradient(135deg, #29ABE2, #0080B8);
+    color: white; font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 8px;
+  }
+
+  /* ══════════════════════════════════
+       VIEW: PATIENT ROSTER
+  ══════════════════════════════════ */
+  #view-roster { display: block; }
+
+  .roster-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px; gap: 16px; flex-wrap: wrap;
+  }
+  .roster-topbar h1 {
+    font-size: 22px; font-weight: 800; color: #1A2C3D;
+  }
+  .roster-topbar .subtitle {
+    font-size: 13px; color: #718096; margin-top: 2px;
+  }
+
+  .search-box {
+    display: flex; align-items: center; gap: 10px;
+    background: white; border: 2px solid #E0E6EF; border-radius: 50px;
+    padding: 8px 16px; min-width: 240px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  }
+  .search-box input {
+    border: none; outline: none; font-size: 14px;
+    color: #1A2C3D; background: transparent; flex: 1;
+    direction: rtl;
+  }
+  .search-box input::placeholder { color: #B0BEC5; }
+
+  /* Patient table */
+  .patient-table { width: 100%; border-collapse: collapse; }
+  .patient-table thead tr {
+    background: #FFF6EE; border-bottom: 2px solid #FFE5C0;
+  }
+  .patient-table th {
+    padding: 11px 14px; text-align: right;
+    font-size: 12px; font-weight: 700; color: #F7941D;
+    letter-spacing: .3px;
+  }
+  .patient-table tbody tr {
+    border-bottom: 1px solid #F0F4F8;
+    transition: background .15s; cursor: pointer;
+  }
+  .patient-table tbody tr:last-child { border-bottom: none; }
+  .patient-table tbody tr:hover { background: #FFFAF5; }
+  .patient-table td {
+    padding: 14px 14px; font-size: 13px; color: #1A2C3D;
+    vertical-align: middle;
+  }
+
+  .pt-name { font-weight: 700; font-size: 14px; }
+  .pt-id   { font-size: 11px; color: #718096; margin-top: 2px; }
+
+  .allergy-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #FDEDEC; color: #C0392B;
+    font-size: 12px; font-weight: 700;
+    padding: 4px 10px; border-radius: 20px;
+    border: 1px solid #FADBD8;
+  }
+
+  .status-dot {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-warn  { background: #F7941D; }
+  .dot-ok    { background: #27AE60; }
+  .dot-alert { background: #C0392B; }
+
+  .open-btn {
+    background: #29ABE2; color: white;
+    border: none; border-radius: 20px;
+    padding: 7px 18px; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all .15s;
+    white-space: nowrap;
+  }
+  .open-btn:hover { background: #0090C8; transform: translateY(-1px); }
+
+  /* ══════════════════════════════════
+       VIEW: PATIENT RECORD
+  ══════════════════════════════════ */
+  #view-record { display: none; }
+
+  .breadcrumb {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 20px; background: white;
+    border-bottom: 1px solid #E8ECF2;
+    font-size: 13px; color: #718096;
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: none; border: none; cursor: pointer;
+    color: #29ABE2; font-size: 13px; font-weight: 700;
+    padding: 0; transition: color .15s;
+  }
+  .back-btn:hover { color: #0080B8; }
+  .breadcrumb-sep { color: #CBD5E0; }
+  .breadcrumb-cur { color: #1A2C3D; font-weight: 600; }
+
+  /* Patient banner inside record */
+  .patient-banner {
+    background: linear-gradient(135deg, #1A3A5C, #1B6FA0);
+    color: white; padding: 16px 24px;
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  }
+  .pb-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(255,255,255,.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; flex-shrink: 0;
+  }
+  .pb-name  { font-size: 18px; font-weight: 800; }
+  .pb-meta  { font-size: 12px; opacity: .8; margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .pb-sep   { opacity: .4; }
+  .pb-allergy-warn {
+    margin-right: auto;
+    background: rgba(192,57,43,.7);
+    border: 1px solid rgba(255,255,255,.25);
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* ── Tab nav inside record ── */
+  .tabs-nav {
+    background: white; border-bottom: 1px solid #E8ECF2;
+    display: flex; padding: 0 20px; overflow-x: auto;
+    position: sticky; top: 60px; z-index: 99;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+  }
+  .tab-btn {
+    background: none; border: none;
+    border-bottom: 3px solid transparent;
+    padding: 14px 18px 11px;
+    font-size: 14px; font-weight: 500; color: #718096;
+    cursor: pointer; white-space: nowrap;
+    transition: all .15s; display: flex; align-items: center; gap: 6px;
+  }
+  .tab-btn:hover { color: #F7941D; }
+  .tab-btn.active {
+    color: #F7941D; border-bottom-color: #F7941D; font-weight: 700;
+  }
+  .alert-dot {
+    width: 7px; height: 7px; background: #C0392B;
+    border-radius: 50%; display: inline-block;
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ══════════════════════════════════
+       ALLERGIES TAB
+  ══════════════════════════════════ */
+  .allergy-item-card {
+    border: 2px solid #E8ECF2; border-radius: 16px;
+    margin-bottom: 16px; overflow: hidden;
+    transition: border-color .2s;
+  }
+  .allergy-item-card.has-results { border-color: #F7941D; }
+
+  .allergy-item-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 20px; background: white;
+  }
+  .allergy-icon-wrap {
+    width: 46px; height: 46px; border-radius: 12px;
+    background: #FDEDEC;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .allergy-name  { font-size: 17px; font-weight: 800; color: #1A2C3D; }
+  .allergy-sub   { font-size: 12px; color: #718096; margin-top: 3px; }
+  .allergy-status-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 700;
+  }
+  .status-unvalidated { background: #FFF3CD; color: #856404; border: 1px solid #FFE69C; }
+  .status-severe      { background: #FDEDEC; color: #C0392B; border: 1px solid #FADBD8; }
+  .status-moderate    { background: #FFF0E5; color: #D35400; border: 1px solid #FFD4AA; }
+  .status-probable    { background: #FFFDE7; color: #7D6608; border: 1px solid #FFECB3; }
+  .status-ok          { background: #EAFAF1; color: #1E8449; border: 1px solid #A9DFBF; }
+
+  .allergy-actions { display: flex; align-items: center; gap: 10px; margin-right: auto; flex-wrap: wrap; }
+
+  .analyze-btn {
+    background: linear-gradient(135deg, #29ABE2, #0090C8);
+    color: white; border: none; border-radius: 20px;
+    padding: 9px 20px; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all .15s;
+    box-shadow: 0 3px 10px rgba(41,171,226,.35);
+    white-space: nowrap;
+  }
+  .analyze-btn:hover:not(:disabled) {
+    transform: translateY(-1px); box-shadow: 0 5px 14px rgba(41,171,226,.45);
+  }
+  .analyze-btn:disabled { background: #BDC3C7; box-shadow: none; cursor: not-allowed; }
+
+  .pdf-link {
+    background: white; color: #C0392B;
+    border: 2px solid #C0392B; border-radius: 20px;
+    padding: 7px 16px; font-size: 13px; font-weight: 700;
+    text-decoration: none; display: inline-block; transition: all .15s;
+    white-space: nowrap;
+  }
+  .pdf-link:hover { background: #C0392B; color: white; }
+  .pdf-link.hidden { display: none; }
+
+  .loading-inline { font-size: 12px; color: #29ABE2; display: none; }
+
+  /* Analysis results inside allergy card */
+  .allergy-results {
+    border-top: 2px solid #FFE5C0;
+    background: #FFFAF5;
+    padding: 20px;
+    display: none;
+  }
+  .allergy-results.visible { display: block; }
+
+  /* ── Severity ── */
+  .severity-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 20px; border-radius: 50px;
+    font-weight: 800; font-size: 14px; color: white; margin-bottom: 10px;
+  }
+  .confirmed_severe   { background: linear-gradient(135deg,#C0392B,#E74C3C); box-shadow:0 3px 12px rgba(192,57,43,.4); }
+  .confirmed_moderate { background: linear-gradient(135deg,#D35400,#E67E22); box-shadow:0 3px 12px rgba(211,84,0,.4); }
+  .probable           { background: linear-gradient(135deg,#B7950B,#D4AC0D); box-shadow:0 3px 12px rgba(183,149,11,.4); }
+  .questionable       { background: linear-gradient(135deg,#1A80B0,#29ABE2); box-shadow:0 3px 12px rgba(41,171,226,.4); }
+  .insufficient_data  { background: linear-gradient(135deg,#5D6D7E,#808B96); }
+
+  /* ── Stats ── */
+  .stats-row { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin: 14px 0; }
+  .stat-box {
+    background: white; border-radius: 12px; padding: 12px 6px;
+    text-align: center; border: 1px solid #FFE5C0;
+  }
+  .stat-box .num { font-size: 22px; font-weight: 900; color: #F7941D; }
+  .stat-box .lbl { font-size: 10px; color: #718096; margin-top: 2px; line-height: 1.3; }
+
+  /* ── Result sections ── */
+  .result-section { margin-top: 16px; }
+  .result-section-title {
+    font-size: 13px; font-weight: 800; color: #1A2C3D;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+    padding-bottom: 8px; border-bottom: 1px solid #FFE5C0;
+  }
+
+  /* ── Timeline ── */
+  .timeline-item {
+    display: flex; gap: 10px; padding: 8px 0;
+    border-bottom: 1px solid #F5F5F5; align-items: flex-start; direction: ltr;
+  }
+  .timeline-item:last-child { border-bottom: none; }
+  .tl-dot { width: 9px; height: 9px; border-radius: 50%; background: #F7941D; margin-top: 4px; flex-shrink: 0; }
+  .tl-date { font-size: 11px; color: #718096; min-width: 84px; padding-top: 1px; }
+  .tl-event { font-size: 13px; font-weight: 600; color: #1A2C3D; }
+  .tl-doc { font-size: 11px; color: #29ABE2; font-weight: 700; margin-top: 1px; }
+
+  /* ── Flags ── */
+  .flags-list { list-style: none; padding: 0; }
+  .flags-list li {
+    display: flex; gap: 8px; color: #C0392B; font-size: 13px;
+    padding: 7px 0; border-bottom: 1px solid #FDEDEC; direction: ltr;
+  }
+  .flags-list li:last-child { border-bottom: none; }
+
+  /* ── Recommendation ── */
+  .recommendation {
+    background: #E8F6FD; border-right: 4px solid #29ABE2;
+    padding: 13px 16px; border-radius: 0 12px 12px 0;
+    font-size: 13px; line-height: 1.7; direction: ltr;
+  }
+
+  /* ── Doc cards ── */
+  .doc-card {
+    border: 1px solid #E8ECF0; border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 8px; direction: ltr;
+    background: white;
+  }
+  .doc-card .doc-header { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .doc-card .doc-id { font-weight: 800; font-size: 13px; }
+  .doc-card .doc-date { font-size: 12px; color: #718096; }
+  .badge-high { background:#C0392B; color:white; border-radius:5px; padding:2px 8px; font-size:11px; font-weight:700; }
+  .badge-med  { background:#E67E22; color:white; border-radius:5px; padding:2px 8px; font-size:11px; font-weight:700; }
+  .doc-card .signals { font-size: 12px; color: #7D3C98; margin: 5px 0; }
+  .doc-card .excerpt {
+    font-size: 12px; color: #555; background: #F8F9FA;
+    border-left: 3px solid #FFD0A0; padding: 7px 10px;
+    border-radius: 0 5px 5px 0; margin-top: 7px; font-style: italic;
+  }
+
+  /* ══ OTHER TABS (generic placeholder) ══ */
+  .rtl-table { width: 100%; border-collapse: collapse; font-size: 13px; direction: rtl; }
+  .rtl-table thead tr { background: #FFF6EE; }
+  .rtl-table th {
+    padding: 10px 14px; text-align: right;
+    border-bottom: 2px solid #FFE5C0; font-weight: 700; color: #F7941D;
+  }
+  .rtl-table td { padding: 12px 14px; border-bottom: 1px solid #F0F4F8; }
+  .rtl-table tbody tr:last-child td { border-bottom: none; }
+
+  .med-row {
+    display: flex; gap: 12px; align-items: center;
+    padding: 13px; border: 1px solid #F0F4F8; border-radius: 12px; margin-bottom: 10px;
+  }
+  .med-ico { width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .bg-blue  { background: #E8F6FD; }
+  .bg-green { background: #EAFAF1; }
+
+  .empty-tab {
+    text-align: center; padding: 52px 20px; color: #718096;
+  }
+  .empty-tab .et-icon { font-size: 44px; margin-bottom: 12px; }
+  .empty-tab .et-title { font-size: 17px; font-weight: 700; color: #1A2C3D; margin-bottom: 6px; }
+
+  .error-box {
+    background: #FDEDEC; border: 1px solid #E74C3C;
+    border-radius: 12px; padding: 14px; color: #922B21;
+    font-size: 13px; display: none; margin-top: 10px;
+  }
+  .error-box pre { margin-top: 6px; font-size: 11px; white-space: pre-wrap; color: #555; }
+  .ltr { direction: ltr; }
+
+  /* ══ USER SWITCHER ══ */
+  .user-switcher { position: relative; margin-left: 12px; }
+  .user-switch-btn {
+    display: flex; align-items: center; gap: 8px;
+    background: #F0F4F8; border: 2px solid #E0E6EF;
+    border-radius: 50px; padding: 6px 14px;
+    cursor: pointer; font-size: 13px; font-weight: 700; color: #1A2C3D;
+    transition: all .15s; white-space: nowrap;
+  }
+  .user-switch-btn:hover { border-color: #29ABE2; background: #E8F6FD; }
+  .user-menu {
+    position: absolute; top: 110%; left: 0;
+    background: white; border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.15);
+    min-width: 230px; padding: 8px;
+    display: none; z-index: 300;
+  }
+  .user-menu.open { display: block; }
+  .user-menu-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: 12px;
+    cursor: pointer; transition: background .15s; font-size: 13px;
+  }
+  .user-menu-item:hover { background: #F0F4F8; }
+  .user-menu-item.active { background: #E8F6FD; }
+  .user-menu-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 14px; color: white; flex-shrink: 0;
+  }
+  .avatar-doctor  { background: linear-gradient(135deg,#F7941D,#E07A10); }
+  .avatar-patient { background: linear-gradient(135deg,#29ABE2,#0080B8); }
+  .user-menu-role { font-size: 11px; color: #718096; margin-top: 1px; }
+
+  body.patient-mode .site-header { background: linear-gradient(135deg,#1A3A5C,#1B6FA0); }
+  body.patient-mode .logo-text { color: white; }
+  body.patient-mode .doctor-name { color: white; }
+  body.patient-mode .doctor-role { color: rgba(255,255,255,.75); }
+  body.patient-mode .avatar { background: rgba(255,255,255,.25); }
+  body.patient-mode .user-switch-btn {
+    background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.3); color: white;
+  }
+  body.patient-mode .user-switch-btn:hover { background: rgba(255,255,255,.3); }
+
+  /* ══ PATIENT PORTAL ══ */
+  #view-patient { display: none; }
+
+  .patient-hero {
+    min-height: 330px;
+    background:
+      radial-gradient(ellipse at 25% 65%, rgba(180,110,40,.6) 0%, transparent 42%),
+      radial-gradient(ellipse at 78% 22%, rgba(160,95,45,.45) 0%, transparent 38%),
+      radial-gradient(ellipse at 55% 85%, rgba(120,75,30,.35) 0%, transparent 30%),
+      linear-gradient(175deg, #2d1f0e 0%, #4a3020 35%, #3d5070 72%, #253345 100%);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center;
+    padding: 32px 28px 52px; color: white; position: relative; overflow: hidden;
+  }
+  .patient-hero-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .patient-hero-greeting {
+    font-size: 42px; font-weight: 900; color: white; line-height: 1.15;
+    margin-bottom: 26px; text-shadow: 0 2px 14px rgba(0,0,0,.4);
+  }
+  .hero-btn-alert {
+    width: 100%; max-width: 360px; padding: 16px 28px;
+    background: linear-gradient(135deg, #E07A10, #F7941D);
+    color: white; border: none; border-radius: 50px;
+    font-size: 16px; font-weight: 800; cursor: pointer; margin-bottom: 12px;
+    box-shadow: 0 4px 20px rgba(230,130,20,.55); transition: all .15s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .hero-btn-alert:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(230,130,20,.65); }
+  .hero-btn-secondary {
+    width: 100%; max-width: 360px; padding: 15px 28px;
+    background: rgba(255,255,255,.18); color: white;
+    border: 2px solid rgba(255,255,255,.38); border-radius: 50px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px; transition: all .15s;
+  }
+  .hero-btn-secondary:hover { background: rgba(255,255,255,.28); }
+
+  .services-card {
+    background: white; border-radius: 24px 24px 0 0;
+    margin-top: -26px; position: relative; z-index: 10;
+    padding: 22px 20px 6px;
+    box-shadow: 0 -6px 28px rgba(0,0,0,.12);
+  }
+  .services-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #F0F4F8;
+    font-size: 15px; font-weight: 800; color: #1A2C3D;
+  }
+  .services-moked {
+    display: flex; align-items: center; gap: 6px;
+    color: #F7941D; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .services-grid {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 4px;
+  }
+  .service-item {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    cursor: pointer; padding: 10px 4px; border-radius: 14px; transition: background .15s;
+  }
+  .service-item:hover { background: #FFF6EE; }
+  .service-item-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: #FFF3E0; border: 2px solid #FFE0B2;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+  }
+  .service-item-label { font-size: 11px; font-weight: 700; color: #1A2C3D; text-align: center; line-height: 1.3; }
+
+  .penfast-alert {
+    background: linear-gradient(135deg,#FFF3E0,#FFF8F0);
+    border: 2px solid #F7941D; border-radius: 16px;
+    padding: 20px 24px; margin-bottom: 16px;
+    display: flex; align-items: flex-start; gap: 16px;
+  }
+  .penfast-alert-icon { font-size: 32px; flex-shrink: 0; margin-top: 2px; }
+  .penfast-alert-title { font-size: 16px; font-weight: 800; color: #D35400; margin-bottom: 5px; }
+  .penfast-alert-desc { font-size: 13px; color: #555; line-height: 1.65; }
+  .penfast-btn {
+    margin-top: 14px;
+    background: linear-gradient(135deg,#F7941D,#E07A10);
+    color: white; border: none; border-radius: 20px;
+    padding: 10px 26px; font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all .15s;
+    box-shadow: 0 3px 12px rgba(247,148,29,.4);
+  }
+  .penfast-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(247,148,29,.5); }
+
+  .patient-allergy-card {
+    border: 2px solid #FADBD8; border-radius: 16px; padding: 20px 22px; margin-bottom: 12px;
+  }
+  .patient-allergy-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .patient-allergy-severity {
+    margin-right: auto;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg,#C0392B,#E74C3C);
+    color: white; font-size: 13px; font-weight: 800;
+    padding: 6px 16px; border-radius: 20px; white-space: nowrap;
+  }
+  .patient-allergy-details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .patient-detail-item { background: #F8F9FA; border-radius: 12px; padding: 11px 14px; }
+  .patient-detail-label { font-size: 11px; color: #718096; font-weight: 700; margin-bottom: 3px; }
+  .patient-detail-value { font-size: 13px; font-weight: 600; color: #1A2C3D; }
+
+  /* ══ PENFAST MODAL ══ */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55);
+    z-index: 999; display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: white; border-radius: 20px;
+    width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,.3); direction: rtl;
+  }
+  .modal-header {
+    background: linear-gradient(135deg,#F7941D,#E07A10);
+    padding: 20px 24px; border-radius: 20px 20px 0 0;
+    display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0;
+  }
+  .modal-title { font-size: 18px; font-weight: 800; color: white; }
+  .modal-close {
+    background: rgba(255,255,255,.2); border: none; border-radius: 50%;
+    width: 32px; height: 32px; color: white; font-size: 18px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .modal-body { padding: 24px; }
+  .penfast-intro {
+    background: #FFF3E0; border-radius: 12px; padding: 13px 16px;
+    margin-bottom: 20px; font-size: 13px; color: #7D3C00; line-height: 1.7;
+  }
+  .pf-progress { display: flex; gap: 5px; margin-bottom: 22px; }
+  .pf-progress-step {
+    flex: 1; height: 5px; border-radius: 5px;
+    background: #E8ECF2; transition: background .3s;
+  }
+  .pf-progress-step.done { background: #F7941D; }
+  .pf-step {
+    margin-bottom: 22px; padding-bottom: 22px;
+    border-bottom: 1px solid #F0F4F8;
+  }
+  .pf-step:last-child { border-bottom: none; margin-bottom: 0; }
+  .pf-q-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #F7941D; color: white; font-size: 12px; font-weight: 800;
+    flex-shrink: 0; margin-left: 8px;
+  }
+  .pf-question {
+    font-size: 14px; font-weight: 700; color: #1A2C3D;
+    margin-bottom: 12px; display: flex; align-items: flex-start;
+  }
+  .pf-options { display: flex; flex-direction: column; gap: 8px; }
+  .pf-option {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 11px 14px; border: 2px solid #E8ECF2;
+    border-radius: 12px; cursor: pointer; transition: all .15s; font-size: 13px;
+  }
+  .pf-option:hover { border-color: #F7941D; background: #FFFAF5; }
+  .pf-option input[type="radio"] { accent-color: #F7941D; margin-top: 2px; flex-shrink: 0; }
+  .pf-submit-btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg,#F7941D,#E07A10);
+    color: white; border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 800; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(247,148,29,.4);
+    transition: all .15s; margin-top: 8px;
+  }
+  .pf-submit-btn:hover:not(:disabled) { transform: translateY(-1px); }
+  .pf-submit-btn:disabled { background: #BDC3C7; box-shadow: none; cursor: not-allowed; }
+  .pf-success { text-align: center; padding: 36px 24px; }
+  .pf-success-icon { font-size: 56px; margin-bottom: 12px; }
+  .pf-success-title { font-size: 20px; font-weight: 800; color: #27AE60; margin-bottom: 8px; }
+  .pf-success-desc { font-size: 13px; color: #555; line-height: 1.75; }
+
+  /* ── Workflow Pipeline ── */
+  .pipeline { display:flex; align-items:flex-start; margin:18px 0 14px; }
+  .ps { flex:1; display:flex; flex-direction:column; align-items:center; position:relative; }
+  .ps::before { content:''; position:absolute; top:14px; right:50%; left:-50%; height:2px; background:#E2E8F0; z-index:0; }
+  .ps:first-child::before { display:none; }
+  .ps-dot { width:28px; height:28px; border-radius:50%; background:#E2E8F0; color:#9CA3AF; display:flex; align-items:center; justify-content:center; font-size:12px; position:relative; z-index:1; flex-shrink:0; }
+  .ps.done .ps-dot  { background:#27AE60; color:#fff; }
+  .ps.done::before  { background:#27AE60; }
+  .ps.active .ps-dot{ background:#F7941D; color:#fff; box-shadow:0 0 0 4px rgba(247,148,29,.18); }
+  .ps.danger .ps-dot{ background:#E74C3C; color:#fff; }
+  .ps-lbl { font-size:9px; color:#9CA3AF; font-weight:600; margin-top:5px; text-align:center; line-height:1.3; }
+  .ps.done .ps-lbl   { color:#27AE60; }
+  .ps.active .ps-lbl { color:#F7941D; font-weight:800; }
+  .ps.danger .ps-lbl { color:#E74C3C; font-weight:800; }
+
+  /* Score bar */
+  .pf-score-row { display:flex; align-items:center; gap:10px; margin:10px 0 4px; }
+  .pf-score-bar { flex:1; height:9px; border-radius:9px; background:#F1F5F9; overflow:hidden; }
+  .pf-score-fill { height:100%; border-radius:9px; }
+  .risk-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 11px; border-radius:20px; font-size:11.5px; font-weight:700; flex-shrink:0; }
+  .risk-low  { background:#D1FAE5; color:#065F46; }
+  .risk-mod  { background:#FEF3C7; color:#92400E; }
+  .risk-high { background:#FEE2E2; color:#991B1B; }
+
+  /* Workflow action banner */
+  .wf-banner { border-radius:10px; padding:12px 16px; margin-top:14px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .wf-banner-info    { background:#EFF6FF; border:1px solid #BFDBFE; }
+  .wf-banner-success { background:#D1FAE5; border:1px solid #6EE7B7; }
+  .wf-banner-danger  { background:#FEE2E2; border:1px solid #FCA5A5; }
+  .wf-banner-warn    { background:#FFF7ED; border:1px solid #FED7AA; }
+  .wf-btn { padding:8px 16px; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .wf-btn-primary   { background:#1A2C3D; color:#fff; }
+  .wf-btn-success   { background:#27AE60; color:#fff; }
+  .wf-btn-danger    { background:#E74C3C; color:#fff; }
+  .wf-btn-secondary { background:#E2E8F0; color:#1A2C3D; }
+
+  /* Patient challenge card */
+  .challenge-card { background:#fff; border-radius:16px; margin:0 20px 20px; box-shadow:0 4px 20px rgba(0,0,0,.08); overflow:hidden; }
+  .challenge-card-hdr { background:#1A2C3D; color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+  .challenge-card-body { padding:16px 18px; }
+  .challenge-step { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px solid #F0F4F8; font-size:13px; }
+  .challenge-step:last-child { border-bottom:none; }
+  .challenge-step-num { width:22px; height:22px; border-radius:50%; background:#F7941D; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; margin-top:1px; }
+
+  /* ── Heat Map View ── */
+  .hm-header { background:#1A2C3D; color:#fff; padding:24px 32px; }
+  .hm-stats  { display:flex; gap:20px; margin-top:16px; flex-wrap:wrap; }
+  .hm-stat   { background:rgba(255,255,255,.08); border-radius:10px; padding:14px 20px; flex:1; min-width:130px; }
+  .hm-stat-n { font-size:28px; font-weight:900; color:#F7941D; }
+  .hm-stat-l { font-size:11px; color:rgba(255,255,255,.65); margin-top:3px; font-weight:600; }
+  .hm-body   { display:flex; gap:0; min-height:calc(100vh - 180px); }
+  .hm-map    { width:290px; flex-shrink:0; background:#F8FAFC; border-left:1px solid #E2E8F0; padding:20px 16px; position:sticky; top:60px; align-self:flex-start; }
+  .hm-detail { flex:1; padding:20px 24px; }
+  .hm-filters{ display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; align-items:center; }
+  .hm-filter-btn { padding:6px 16px; border-radius:20px; border:1.5px solid #E2E8F0; background:#fff; font-size:12px; font-weight:700; cursor:pointer; transition:.15s; color:#374151; }
+  .hm-filter-btn.active { border-color:#F7941D; background:#FFF7ED; color:#C2410C; }
+  .hm-grid   { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+  .hm-card   { background:#fff; border-radius:12px; border:1.5px solid #E2E8F0; padding:14px 16px; cursor:pointer; transition:.15s; }
+  .hm-card:hover { border-color:#F7941D; box-shadow:0 4px 16px rgba(247,148,29,.15); }
+  .hm-card.selected { border-color:#F7941D; background:#FFFBF5; }
+  .hm-card-city { font-size:15px; font-weight:800; color:#1A2C3D; margin-bottom:2px; }
+  .hm-card-region{ font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; }
+  .hm-bar-wrap{ height:6px; background:#F1F5F9; border-radius:6px; margin-bottom:6px; overflow:hidden; }
+  .hm-bar-seg { height:100%; border-radius:6px; float:right; }
+  .hm-bar-labels{ display:flex; justify-content:space-between; font-size:10px; color:#9CA3AF; }
+  .hm-legend { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .hm-legend-item{ display:flex; align-items:center; gap:5px; font-size:11px; color:#374151; font-weight:600; }
+  .hm-legend-dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .hm-count-low  { font-size:20px; font-weight:900; color:#065F46; }
+  .hm-count-mod  { font-size:20px; font-weight:900; color:#92400E; }
+  .hm-count-high { font-size:20px; font-weight:900; color:#991B1B; }
+  .hm-mini-row   { display:flex; justify-content:space-between; font-size:11px; margin-top:6px; }
+  .hm-mini-lbl   { color:#9CA3AF; font-weight:600; }
+  .hm-mini-val   { font-weight:800; }
+  .hm-map-title  { font-size:11px; font-weight:800; color:#94A3B8; letter-spacing:.5px; margin-bottom:12px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════
+     SITE HEADER (doctor)
+═══════════════════════════════ -->
+<header class="site-header">
+  <div class="logo-wrap">
+    <svg width="36" height="36" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="og" cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#FFCF5C"/>
+          <stop offset="100%" stop-color="#F7941D"/>
+        </radialGradient>
+      </defs>
+      <circle cx="20" cy="20" r="18" fill="url(#og)"/>
+      <path d="M20 6 C28 6 34 12 34 20 C34 26 30 31 24 33 C18 35 12 32 9 27 C13 29 18 28 21 24 C24 20 23 14 20 11 C17 8 13 8 11 10 C13 7 16 6 20 6Z" fill="rgba(255,255,255,0.35)"/>
+      <path d="M20 34 C12 34 6 28 6 20 C6 14 10 9 16 7 C12 9 10 14 13 18 C16 22 22 22 25 19 C28 16 27 11 24 9 C27 11 30 15 30 20 C30 27 26 34 20 34Z" fill="rgba(255,255,255,0.20)"/>
+    </svg>
+    <span class="logo-text">מאוחדת</span>
+  </div>
+  <div class="header-right">
+    <div class="user-switcher" id="userSwitcher">
+      <button class="user-switch-btn" onclick="toggleUserMenu()">
+        <span id="userSwitchLabel">ד"ר שרה לוי</span>
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L1 3h10z"/></svg>
+      </button>
+      <div class="user-menu" id="userMenu">
+        <div class="user-menu-item active" id="menuDoctor" onclick="switchUser('doctor')">
+          <div class="user-menu-avatar avatar-doctor">ש</div>
+          <div>
+            <div style="font-weight:700">ד"ר שרה לוי</div>
+            <div class="user-menu-role">רפואת משפחה · רופאה</div>
+          </div>
+        </div>
+        <div class="user-menu-item" id="menuPatient" onclick="switchUser('patient')">
+          <div class="user-menu-avatar avatar-patient">ד</div>
+          <div>
+            <div style="font-weight:700">דוד כהן</div>
+            <div class="user-menu-role">מטופל · ת.ז. 052-1234567</div>
+          </div>
+        </div>
+        <div class="user-menu-item" id="menuHeatmap" onclick="switchUser('heatmap')">
+          <div class="user-menu-avatar" style="background:linear-gradient(135deg,#7C3AED,#A855F7);">מ</div>
+          <div>
+            <div style="font-weight:700">מנהל מחוז</div>
+            <div class="user-menu-role">ניתוח אוכלוסייה · Heat Map</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="doctor-info">
+      <div class="doctor-name" id="headerName">ד"ר שרה לוי</div>
+      <div class="doctor-role" id="headerRole">רפואת משפחה · מרפאה מרכזית תל אביב</div>
+    </div>
+    <div class="avatar" id="headerAvatar">ש</div>
+  </div>
+</header>
+
+
+<!-- ═══════════════════════════════
+     VIEW 1: PATIENT ROSTER
+═══════════════════════════════ -->
+<div id="view-roster">
+  <div class="page">
+    <div class="roster-topbar">
+      <div>
+        <h1>רשימת המטופלים שלי</h1>
+        <div class="subtitle" id="patientCount">טוען...</div>
+      </div>
+      <div class="search-box">
+        <svg width="16" height="16" fill="none" stroke="#B0BEC5" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="חיפוש לפי שם או ת.ז." oninput="filterPatients(this.value)">
+      </div>
+    </div>
+
+    <div class="card" style="padding:0; overflow:hidden;">
+      <table class="patient-table" id="patientTable">
+        <thead>
+          <tr>
+            <th>שם המטופל</th>
+            <th>גיל</th>
+            <th>אלרגיות ידועות</th>
+            <th>ביקור אחרון</th>
+            <th>סטטוס אלרגיה</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="patientTbody">
+          <tr><td colspan="6" style="text-align:center;padding:28px;color:#718096;">טוען מטופלים...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════
+     VIEW 2: PATIENT RECORD
+═══════════════════════════════ -->
+<div id="view-record">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <button class="back-btn" onclick="goBack()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      רשימת מטופלים
+    </button>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-cur" id="breadcrumbName">—</span>
+  </div>
+
+  <!-- Patient banner -->
+  <div class="patient-banner" id="patientBanner">
+    <div class="pb-avatar" id="pbAvatar">—</div>
+    <div>
+      <div class="pb-name" id="pbName">—</div>
+      <div class="pb-meta" id="pbMeta"></div>
+    </div>
+    <div class="pb-allergy-warn" id="pbAllergyWarn" style="display:none;">
+      ⚠️ <span id="pbAllergyText"></span>
+    </div>
+  </div>
+
+  <!-- Tab navigation -->
+  <nav class="tabs-nav">
+    <button class="tab-btn" data-tab="overview"  onclick="switchTab('overview')">📋 סקירה כללית</button>
+    <button class="tab-btn" data-tab="visits"    onclick="switchTab('visits')">🏥 ביקורים</button>
+    <button class="tab-btn" data-tab="meds"      onclick="switchTab('meds')">💊 תרופות</button>
+    <button class="tab-btn active" data-tab="allergies" onclick="switchTab('allergies')">
+      🧬 אלרגיות <span class="alert-dot"></span>
+    </button>
+    <button class="tab-btn" data-tab="labs"      onclick="switchTab('labs')">🔬 בדיקות מעבדה</button>
+    <button class="tab-btn" data-tab="docs"      onclick="switchTab('docs')">📄 מסמכים</button>
+  </nav>
+
+  <!-- ── TAB: סקירה כללית ── -->
+  <div class="tab-content" id="tab-overview">
+    <div class="page">
+      <div class="card">
+        <div class="card-title"><div class="card-icon">👤</div>פרטי מטופל</div>
+        <div id="overviewContent" style="font-size:13px;color:#555;line-height:2;">
+          בחר מטופל מהרשימה כדי לצפות בפרטים.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: ביקורים ── -->
+  <div class="tab-content" id="tab-visits">
+    <div class="page">
+      <div class="card">
+        <div class="card-title"><div class="card-icon">🏥</div>ביקורים אחרונים</div>
+        <table class="rtl-table" id="visitsTable">
+          <thead><tr><th>תאריך</th><th>מחלקה</th><th>אבחנה</th><th>רופא</th></tr></thead>
+          <tbody id="visitsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: תרופות ── -->
+  <div class="tab-content" id="tab-meds">
+    <div class="page">
+      <div class="card">
+        <div class="card-title"><div class="card-icon">💊</div>תרופות פעילות</div>
+        <div id="medsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: אלרגיות (MAIN FEATURE) ── -->
+  <div class="tab-content active" id="tab-allergies">
+    <div class="page">
+      <div class="card">
+        <div class="card-title">
+          <div class="card-icon">🧬</div>
+          אלרגיות מוכרות
+          <span class="ai-badge">ניתוח AI</span>
+        </div>
+        <p style="font-size:13px;color:#718096;margin-bottom:18px;">
+          לחץ על "נתח ואמת" לכל אלרגיה לקבלת ניתוח AI מלא של התיק הרפואי ואישור הממצאים.
+        </p>
+        <div id="allergiesList">
+          <div style="text-align:center;padding:32px;color:#718096;font-size:13px;">
+            פתח תיק מטופל מהרשימה הראשית
+          </div>
+        </div>
+      </div>
+      <div id="penfastDoctorSection"></div>
+    </div>
+  </div>
+
+  <!-- ── TAB: בדיקות מעבדה ── -->
+  <div class="tab-content" id="tab-labs">
+    <div class="page">
+      <div class="card">
+        <div class="card-title"><div class="card-icon">🔬</div>בדיקות מעבדה</div>
+        <table class="rtl-table" id="labsTable">
+          <thead><tr><th>תאריך</th><th>בדיקה</th><th>תוצאה</th><th>סטטוס</th></tr></thead>
+          <tbody id="labsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: מסמכים ── -->
+  <div class="tab-content" id="tab-docs">
+    <div class="page">
+      <div class="card">
+        <div class="card-title"><div class="card-icon">📄</div>מסמכים רפואיים</div>
+        <div id="docsList">
+          <div class="empty-tab">
+            <div class="et-icon">📄</div>
+            <div class="et-title">פתח תיק מטופל לצפייה במסמכים</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /view-record -->
+
+
+<!-- ═══════════════════════════════
+     VIEW 3: PATIENT PORTAL (דוד כהן)
+═══════════════════════════════ -->
+<div id="view-patient">
+
+  <!-- Hero — app-style bokeh background -->
+  <div class="patient-hero">
+    <!-- Logo -->
+    <div class="patient-hero-logo">
+      <svg width="42" height="42" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="og2" cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#FFCF5C"/>
+            <stop offset="100%" stop-color="#F7941D"/>
+          </radialGradient>
+        </defs>
+        <circle cx="20" cy="20" r="18" fill="url(#og2)"/>
+        <path d="M20 6 C28 6 34 12 34 20 C34 26 30 31 24 33 C18 35 12 32 9 27 C13 29 18 28 21 24 C24 20 23 14 20 11 C17 8 13 8 11 10 C13 7 16 6 20 6Z" fill="rgba(255,255,255,0.35)"/>
+        <path d="M20 34 C12 34 6 28 6 20 C6 14 10 9 16 7 C12 9 10 14 13 18 C16 22 22 22 25 19 C28 16 27 11 24 9 C27 11 30 15 30 20 C30 27 26 34 20 34Z" fill="rgba(255,255,255,0.20)"/>
+      </svg>
+      <span style="font-size:26px;font-weight:900;color:white;letter-spacing:-1px;">מאוחדת</span>
+    </div>
+
+    <!-- Greeting -->
+    <div class="patient-hero-greeting">בוקר טוב,<br>דוד! 👋</div>
+
+    <!-- PenFAST CTA (orange — visible until completed) -->
+    <button class="hero-btn-alert" id="heroPenfastBtn" onclick="openPenfastModal()">
+      ⚠️ מלא שאלון PenFAST — נדרש
+    </button>
+
+    <!-- Completed state (replaces the orange button) -->
+    <div id="heroPenfastDone" style="display:none;background:rgba(39,174,96,.22);border:2px solid rgba(39,174,96,.55);border-radius:50px;padding:13px 28px;color:white;font-weight:700;font-size:14px;margin-bottom:12px;max-width:360px;width:100%;text-align:center;">
+      ✅ שאלון PenFAST הושלם
+    </div>
+
+    <!-- Quick appointment -->
+    <button class="hero-btn-secondary">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      זימון תור מהיר
+    </button>
+  </div>
+
+  <!-- Services card — pulled up over hero -->
+  <div class="services-card">
+    <div class="services-card-header">
+      <span>איתור שירותים</span>
+      <span class="services-moked">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.16 6.16l.91-.84a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+        מוקד מאוחדת
+      </span>
+    </div>
+
+    <div class="services-grid">
+      <div class="service-item"><div class="service-item-icon">👨‍⚕️</div><span class="service-item-label">רופאים</span></div>
+      <div class="service-item"><div class="service-item-icon">🏥</div><span class="service-item-label">מרפאות</span></div>
+      <div class="service-item"><div class="service-item-icon">💊</div><span class="service-item-label">תרופות</span></div>
+      <div class="service-item"><div class="service-item-icon">🔬</div><span class="service-item-label">מעבדות</span></div>
+      <div class="service-item"><div class="service-item-icon">🩺</div><span class="service-item-label">מכונים</span></div>
+      <div class="service-item"><div class="service-item-icon">👩‍⚕️</div><span class="service-item-label">מרפאות אחיות</span></div>
+      <div class="service-item"><div class="service-item-icon">💉</div><span class="service-item-label">בתי מרקחת</span></div>
+      <div class="service-item"><div class="service-item-icon">🚑</div><span class="service-item-label">מוקדי חירום</span></div>
+    </div>
+  </div>
+
+  <!-- Content below services card -->
+  <div class="page" style="padding-top:16px;">
+
+    <!-- PenFAST alert (detailed — hidden when completed) -->
+    <div class="penfast-alert" id="penfastAlert">
+      <div class="penfast-alert-icon">📋</div>
+      <div style="flex:1">
+        <div class="penfast-alert-title">קבל הטבות בריאות במאוחדת — מילוי שאלון PenFAST</div>
+        <div class="penfast-alert-desc">
+          בתיקך הרפואי מופיע אבחון של <strong>אלרגיה לפניצילין</strong>.
+          שאלון PenFAST (5 שאלות קצרות) יעזור לצוות הרפואי להעריך את חומרת האלרגיה
+          ולבחור עבורך את הטיפול הטוב ביותר.
+        </div>
+        <button class="penfast-btn" onclick="openPenfastModal()">📋 מלא שאלון עכשיו</button>
+      </div>
+    </div>
+
+    <!-- PenFAST completed badge -->
+    <div id="penfastCompleted" style="display:none;background:#EAFAF1;border:2px solid #27AE60;border-radius:16px;padding:16px 20px;margin-bottom:16px;align-items:center;gap:12px;">
+      <span style="font-size:24px">✅</span>
+      <div>
+        <div style="font-weight:800;color:#1E8449;font-size:14px;">שאלון PenFAST הושלם בהצלחה</div>
+        <div style="font-size:12px;color:#555;margin-top:2px;">הממצאים הועברו לד"ר שרה לוי לבדיקה</div>
+      </div>
+    </div>
+
+    <!-- Challenge Card (shown when doctor approves) -->
+    <div id="challengeCard" style="display:none;" class="challenge-card">
+      <div class="challenge-card-hdr">
+        <div>
+          <div style="font-size:11px;font-weight:700;opacity:.6;letter-spacing:.5px;">מסלול אלרגיה</div>
+          <div style="font-size:16px;font-weight:900;margin-top:2px;">🧪 תגר פומי לפניצילין</div>
+        </div>
+        <span class="risk-chip risk-low" style="font-size:12px;">✓ אושר</span>
+      </div>
+      <div class="challenge-card-body" id="challengeCardBody">
+        <!-- filled dynamically by renderPatientChallengeCard() -->
+      </div>
+    </div>
+
+    <!-- My Allergies -->
+    <div class="card">
+      <div class="card-title"><div class="card-icon">🧬</div>האלרגיות שלי</div>
+      <div class="patient-allergy-card">
+        <div class="patient-allergy-header">
+          <div style="width:50px;height:50px;border-radius:14px;background:#FDEDEC;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">💊</div>
+          <div>
+            <div style="font-size:18px;font-weight:800;color:#1A2C3D;">פניצילין</div>
+            <div style="font-size:12px;color:#718096;margin-top:2px;">Beta-Lactam Antibiotic Allergy</div>
+          </div>
+        </div>
+        <div class="patient-allergy-details">
+          <div class="patient-detail-item">
+            <div class="patient-detail-label">תאריך אבחון</div>
+            <div class="patient-detail-value">ינואר 2024</div>
+          </div>
+          <div class="patient-detail-item">
+            <div class="patient-detail-label">רופא מאבחן</div>
+            <div class="patient-detail-value">ד"ר מיכאל רוזן, אלרגולוג</div>
+          </div>
+          <div class="patient-detail-item">
+            <div class="patient-detail-label">תגובה חמורה ביותר</div>
+            <div class="patient-detail-value" style="color:#C0392B;">אנפילקסיס (נובמבר 2022)</div>
+          </div>
+          <div class="patient-detail-item">
+            <div class="patient-detail-label">הנחיות</div>
+            <div class="patient-detail-value">נשא EpiPen · הימנע מכל beta-lactams</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active medications -->
+    <div class="card">
+      <div class="card-title"><div class="card-icon">💊</div>התרופות שלי</div>
+      <div class="med-row">
+        <div class="med-ico bg-blue">💊</div>
+        <div style="flex:1"><div style="font-weight:700;font-size:14px;">ליסינופריל 10 מ"ג</div><div style="font-size:12px;color:#718096;margin-top:2px;">פעם ביום — לחץ דם</div></div>
+        <div style="font-size:12px;color:#27AE60;font-weight:700;">פעיל ✓</div>
+      </div>
+      <div class="med-row">
+        <div class="med-ico bg-blue">💊</div>
+        <div style="flex:1"><div style="font-weight:700;font-size:14px;">אטורוואסטטין 20 מ"ג</div><div style="font-size:12px;color:#718096;margin-top:2px;">פעם ביום — כולסטרול</div></div>
+        <div style="font-size:12px;color:#27AE60;font-weight:700;">פעיל ✓</div>
+      </div>
+      <div class="med-row">
+        <div class="med-ico bg-green">💊</div>
+        <div style="flex:1"><div style="font-weight:700;font-size:14px;">צטיריזין 10 מ"ג</div><div style="font-size:12px;color:#718096;margin-top:2px;">לפי הצורך — אנטיהיסטמין</div></div>
+        <div style="font-size:12px;color:#27AE60;font-weight:700;">פעיל ✓</div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /view-patient -->
+
+
+<!-- ═══════════════════════════════
+     PENFAST MODAL
+═══════════════════════════════ -->
+<div class="modal-overlay" id="penfastModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📋 שאלון PenFAST</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:2px;">הערכת סיכון — אלרגיה לפניצילין</div>
+      </div>
+      <button class="modal-close" onclick="closePenfastModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Form -->
+      <div id="penfastForm">
+        <div class="penfast-intro">
+          שאלון זה עוזר לצוות הרפואי להעריך את מידת הסיכון של האלרגיה שלך לפניצילין.
+          ענה על 5 שאלות קצרות בנוגע לתגובה האלרגית שחווית.
+        </div>
+
+        <div class="pf-progress">
+          <div class="pf-progress-step" id="pstep1"></div>
+          <div class="pf-progress-step" id="pstep2"></div>
+          <div class="pf-progress-step" id="pstep3"></div>
+          <div class="pf-progress-step" id="pstep4"></div>
+          <div class="pf-progress-step" id="pstep5"></div>
+        </div>
+
+        <!-- Q1 -->
+        <div class="pf-step">
+          <div class="pf-question"><span class="pf-q-num">1</span>מה הייתה התגובה האלרגית העיקרית שחווית?</div>
+          <div class="pf-options">
+            <label class="pf-option"><input type="radio" name="pf1" value="anaphylaxis" onchange="pfUpdate()"><div><strong>אנפילקסיס</strong> — קושי בנשימה, ירידת לחץ דם או התמוטטות</div></label>
+            <label class="pf-option"><input type="radio" name="pf1" value="angioedema" onchange="pfUpdate()"><div><strong>אנגיואדמה</strong> — נפיחות בשפתיים, לשון או גרון</div></label>
+            <label class="pf-option"><input type="radio" name="pf1" value="urticaria" onchange="pfUpdate()"><div><strong>אורטיקריה / פריחה</strong> — גרד, אדמומיות או כוורות בעור</div></label>
+            <label class="pf-option"><input type="radio" name="pf1" value="other" onchange="pfUpdate()"><div><strong>תגובה אחרת</strong> — בחילה, כאבי בטן וכד'</div></label>
+          </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="pf-step">
+          <div class="pf-question"><span class="pf-q-num">2</span>האם הייתה לך חום בזמן התגובה האלרגית?</div>
+          <div class="pf-options">
+            <label class="pf-option"><input type="radio" name="pf2" value="yes" onchange="pfUpdate()"><div><strong>כן</strong> — הייתה לי חום</div></label>
+            <label class="pf-option"><input type="radio" name="pf2" value="no" onchange="pfUpdate()"><div><strong>לא</strong> — לא הייתה לי חום</div></label>
+            <label class="pf-option"><input type="radio" name="pf2" value="unsure" onchange="pfUpdate()"><div><strong>לא בטוח/ה</strong></div></label>
+          </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="pf-step">
+          <div class="pf-question"><span class="pf-q-num">3</span>האם היה צורך בטיפול רפואי עקב התגובה?</div>
+          <div class="pf-options">
+            <label class="pf-option"><input type="radio" name="pf3" value="epinephrine" onchange="pfUpdate()"><div><strong>זריקת אדרנלין (EpiPen)</strong></div></label>
+            <label class="pf-option"><input type="radio" name="pf3" value="antihistamine" onchange="pfUpdate()"><div><strong>אנטיהיסטמין / קורטיזון</strong> — טיפול מקל</div></label>
+            <label class="pf-option"><input type="radio" name="pf3" value="none" onchange="pfUpdate()"><div><strong>לא היה צורך בטיפול</strong> — חלפה מעצמה</div></label>
+          </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="pf-step">
+          <div class="pf-question"><span class="pf-q-num">4</span>האם פנית לחדר מיון או אושפזת עקב התגובה?</div>
+          <div class="pf-options">
+            <label class="pf-option"><input type="radio" name="pf4" value="hospitalized" onchange="pfUpdate()"><div><strong>כן, אושפזתי</strong></div></label>
+            <label class="pf-option"><input type="radio" name="pf4" value="er" onchange="pfUpdate()"><div><strong>פניתי לחדר מיון</strong> (ללא אשפוז)</div></label>
+            <label class="pf-option"><input type="radio" name="pf4" value="no" onchange="pfUpdate()"><div><strong>לא פניתי לחדר מיון</strong></div></label>
+          </div>
+        </div>
+
+        <!-- Q5 -->
+        <div class="pf-step">
+          <div class="pf-question"><span class="pf-q-num">5</span>מתי בפעם האחרונה נחשפת לפניצילין / אמוקסיצילין?</div>
+          <div class="pf-options">
+            <label class="pf-option"><input type="radio" name="pf5" value="recent" onchange="pfUpdate()"><div><strong>לפני פחות מ-5 שנים</strong></div></label>
+            <label class="pf-option"><input type="radio" name="pf5" value="old" onchange="pfUpdate()"><div><strong>לפני יותר מ-5 שנים</strong></div></label>
+            <label class="pf-option"><input type="radio" name="pf5" value="unknown" onchange="pfUpdate()"><div><strong>לא זוכר/ת</strong></div></label>
+          </div>
+        </div>
+
+        <button class="pf-submit-btn" id="pfSubmitBtn" onclick="submitPenfast()" disabled>
+          שלח שאלון לצוות הרפואי ←
+        </button>
+      </div>
+
+      <!-- Success screen -->
+      <div class="pf-success" id="penfastSuccess" style="display:none;">
+        <div class="pf-success-icon">✅</div>
+        <div class="pf-success-title">השאלון נשלח בהצלחה!</div>
+        <div class="pf-success-desc">
+          תשובותיך הועברו לצוות הרפואי שלך.<br>
+          ד"ר שרה לוי תסקור את הממצאים ותיצור איתך קשר בנוגע לצעדים הבאים.<br><br>
+          <strong>חשוב לזכור:</strong> המשך להימנע מפניצילין ונשא את ה-EpiPen שלך בכל עת.
+        </div>
+        <button onclick="closePenfastModal()" style="margin-top:20px;background:#27AE60;color:white;border:none;border-radius:20px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer;">סגור</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+var allPatients    = [];
+var patientRawDocs = {};
+var analysisCache  = {};  // patientId → analysis data
+var penfastStore   = {};
+  var workflowState  = {};  /* patientId → {stage,score,risk,...} */  // patientId → submitted questionnaire answers
+
+/* Static demo extras (enriches the limited mock data) */
+var extras = {
+  'P001': {
+    dob: '15.03.1978', age: 47, clinic: 'תל אביב מרכז', idNum: '052-1234567',
+    lastVisit: '12.01.2025',
+    visits: [
+      { date:'12.01.2025', dept:'רפואת משפחה',  dx:'ביקור שגרתי',          dr:'ד"ר שרה לוי' },
+      { date:'03.11.2024', dept:'אלרגולוגיה',   dx:'בדיקת אלרגיה — מעקב', dr:'ד"ר מיכאל רוזן' },
+      { date:'22.08.2024', dept:'עור ומין',     dx:'אורטיקריה — הפנייה',   dr:'ד"ר יונה בן דוד' },
+      { date:'14.03.2024', dept:'רפואת משפחה',  dx:'זיהום בדרכי הנשימה',  dr:'ד"ר שרה לוי' }
+    ],
+    meds: [
+      { name:'ליסינופריל 10 מ"ג', note:'פעם ביום — לחץ דם', icon:'💊', bg:'bg-blue' },
+      { name:'אטורוואסטטין 20 מ"ג', note:'פעם ביום — כולסטרול', icon:'💊', bg:'bg-blue' },
+      { name:'צטיריזין 10 מ"ג', note:'לפי הצורך — אנטיהיסטמין', icon:'💊', bg:'bg-green' }
+    ],
+    labs: [
+      { date:'20.01.2025', name:'המוגלובין (Hgb)',           result:'14.8 g/dL',   status:'✓ תקין',   cls:'color:#27AE60' },
+      { date:'20.01.2025', name:'לויקוציטים (WBC)',          result:'7.2 ×10³/µL', status:'✓ תקין',   cls:'color:#27AE60' },
+      { date:'20.01.2025', name:'טסיות (PLT)',                result:'218 ×10³/µL', status:'✓ תקין',   cls:'color:#27AE60' },
+      { date:'20.01.2025', name:'אאוזינופילים',               result:'6.1%',         status:'⬆ גבוה',   cls:'color:#E67E22' },
+      { date:'20.01.2025', name:'גלוקוז בצום',               result:'118 mg/dL',   status:'⬆ גבוה',   cls:'color:#E67E22' },
+      { date:'20.01.2025', name:'HbA1c (המוגלובין מסוכרר)', result:'7.2%',         status:'⬆ גבוה',   cls:'color:#E67E22' },
+      { date:'20.01.2025', name:'כולסטרול כולל',             result:'198 mg/dL',   status:'✓ תקין',   cls:'color:#27AE60' },
+      { date:'20.01.2025', name:'LDL כולסטרול',              result:'122 mg/dL',   status:'⬆ גבוה',   cls:'color:#E67E22' },
+      { date:'20.01.2025', name:'HDL כולסטרול',              result:'48 mg/dL',    status:'✓ תקין',   cls:'color:#27AE60' },
+      { date:'20.01.2025', name:'טריגליצרידים',              result:'165 mg/dL',   status:'⬆ גבוה',   cls:'color:#E67E22' },
+      { date:'20.01.2025', name:'קריאטינין',                 result:'0.98 mg/dL',  status:'✓ תקין',   cls:'color:#27AE60' },
+      { date:'20.01.2025', name:'AST (SGOT)',                 result:'31 U/L',      status:'✓ תקין',   cls:'color:#27AE60' },
+      { date:'20.01.2025', name:'ALT (SGPT)',                 result:'28 U/L',      status:'✓ תקין',   cls:'color:#27AE60' },
+      { date:'14.09.2024', name:'IgE כולל',                  result:'280 IU/mL',   status:'⬆ גבוה',   cls:'color:#E67E22' },
+      { date:'14.09.2024', name:'IgE ספציפי — פניצילין',    result:'3.2 kUA/L',   status:'⬆ חיובי',  cls:'color:#C0392B' },
+      { date:'14.09.2024', name:'CRP (חלבון תגובתי C)',      result:'4.1 mg/L',    status:'⬆ גבוה',   cls:'color:#E67E22' },
+      { date:'14.09.2024', name:'TSH (בלוטת התריס)',         result:'2.1 µIU/mL',  status:'✓ תקין',   cls:'color:#27AE60' }
+    ],
+    docs: [
+      { id:'D001', date:'12.06.2019', type:'רפואת משפחה', icon:'🏠',
+        title:'תגובה לאמוקסיצילין — ביקור ראשון', doctor:'ד"ר שרה לוי',
+        complaint:'פריחה וגרד שהתפתחו כשעתיים לאחר נטילת מנה ראשונה של אמוקסיצילין 500 מ"ג לזיהום בדרכי הנשימה. המטופל מדווח על אדמומיות וגרד עז בגזע ובגפיים.',
+        findings:'בבדיקה גופנית: פריחה אורטיקריאלית מפושטת בגזע ובגפיים. ללא מצוקה נשימתית, ללא נפיחות בפנים. לחץ דם 120/80 מ"מ כספית, דופק 82/דקה, חום 36.8°C.',
+        diagnosis:'חשד לתגובה אלרגית — אורטיקריה לאמוקסיצילין.',
+        recommendation:'הפסקת הטיפול האנטיביוטי לאלתר. מרשם: צטיריזין 10 מ"ג פעמיים ביום ל-5 ימים. הפניה דחופה לאלרגולוג לבדיקת עור ובירור.' },
+      { id:'D002', date:'03.07.2019', type:'אלרגולוגיה', icon:'🧬',
+        title:'בדיקת עור — Skin Prick Test לפניצילין', doctor:'ד"ר מיכאל רוזן',
+        complaint:'הפניה מרופא משפחה לאחר אפיזודה של פריחה לאמוקסיצילין. המטופל מדווח על תגובה בודדת ביוני 2019.',
+        findings:'SPT: פניצילין G — שלילי. פניצילין V — שלילי. אמוקסיצילין — תגובה חיובית 6 מ"מ (נורמה <3). IgE ספציפי לפניצילין: 3.2 kUA/L.',
+        diagnosis:'אלרגיה סבירה לאמוקסיצילין / פניצילין (Probable Penicillin Allergy).',
+        recommendation:'הימנעות מוחלטת מ-Beta-Lactams. חלופות: אריתרומיצין, קלינדמיצין, אזיתרומיצין. עדכון רישום אדום בתיק הרפואי.' },
+      { id:'D003', date:'18.02.2021', type:'עור ומין', icon:'🩺',
+        title:'פריחה אורטיקריאלית מפושטת', doctor:'ד"ר יונה בן דוד',
+        complaint:'פריחה בכל הגוף עם גרד עז שהתפתחה 3 ימים לאחר קורס אנטיביוטיקה לזיהום בדרכי הנשימה.',
+        findings:'פריחה אורטיקריאלית בגזע, גפיים ופנים. הכוורות נסוגות ללא עקבות. אין דרמטיטיס אטופי. אין ממצאים פתולוגיים נוספים.',
+        diagnosis:'פריחה אורטיקריאלית אלרגית — תגובת יתר סבירה ל-Beta-Lactam.',
+        recommendation:'קורטיקוסטרואיד מקומי. לורטאדין 10 מ"ג פעמיים ביום ל-7 ימים. הימנעות מ-Beta-Lactams. עדכון רופא משפחה.' },
+      { id:'D004', date:'05.11.2022', type:'חדר מיון', icon:'🚨',
+        title:'אנפילקסיס — קבלה לחדר מיון', doctor:'ד"ר אבי כהן',
+        complaint:'המטופל מגיע בעגלה עם אורטיקריה מפושטת, נפיחות שפתיים ולשון וקוצר נשימה קל. קיבל Cephalexin אצל רופא שיניים כשעה לפני הגעה.',
+        findings:'BP 95/60, HR 110, SpO2 96%, T 37.1°C. נפיחות שפתיים ולשון דרגה 2. Wheeze קל בשתי הריאות. פריחה אורטיקריאלית מפושטת.',
+        diagnosis:'אנפילקסיס (Anaphylaxis) — תגובת צלב: Cephalexin ↔ פניצילין.',
+        recommendation:'אדרנלין IM 0.5 מ"ג מיד. מתילפרדניזולון IV 125 מ"ג. פנירמין IV. נוזלים IV 500 מ"ל. ניטור 6 שעות. שוחרר עם EpiPen × 2. איסור מוחלט על Beta-Lactams.' },
+      { id:'D005', date:'20.03.2023', type:'רפואת משפחה', icon:'🏠',
+        title:'ביקור מעקב — יתר לחץ דם וסוכרת', doctor:'ד"ר שרה לוי',
+        complaint:'ביקור שגרתי לבקרת יתר לחץ דם וסוכרת מסוג 2. המטופל מדווח על שלשול קל לסירוגין.',
+        findings:'לחץ דם 130/85. HbA1c 7.2%. משקל 84 ק"ג, BMI 27.2. בדיקת כפות רגליים תקינה.',
+        diagnosis:'יתר לחץ דם — שליטה חלקית. סוכרת מסוג 2 — שליטה גלוקמית תת-אופטימלית.',
+        recommendation:'המשך רמיפריל 5 מ"ג + מטפורמין 850 מ"ג. תזונה דלת פחמימות. פעילות גופנית 30 דקות ביום. בקרה בעוד 3 חודשים.' },
+      { id:'D006', date:'14.09.2023', type:'בדיקות מעבדה', icon:'🔬',
+        title:'תוצאות IgE, אאוזינופילים ו-CRP', doctor:'מעבדה מרכזית — מאוחדת',
+        complaint:'הפניה לבדיקות מעבדה שגרתיות ולאישור סרולוגי של אלרגיה לפניצילין.',
+        findings:'IgE כולל: 280 IU/mL (נורמה <100). IgE ספציפי לפניצילין: 3.2 kUA/L (חיובי). אאוזינופילים: 6.1% (נורמה 1-5%). CRP: 4.1 mg/L. CBC תקין. כימיה תקינה.',
+        diagnosis:'אישור סרולוגי לאלרגיה לפניצילין. נטייה אלרגית/אטופית.',
+        recommendation:'העברת התוצאות לאלרגולוג ולרופא המשפחה. מעקב שנתי.' },
+      { id:'D007', date:'08.01.2024', type:'אלרגולוגיה', icon:'🧬',
+        title:'מעקב — אישור אלרגיה ומתן EpiPen', doctor:'ד"ר מיכאל רוזן',
+        complaint:'ביקור מעקב לאחר אנפילקסיס נובמבר 2022. המטופל חרד לנטילת אנטיביוטיקה עתידית.',
+        findings:'ציר זמן: פריחה 06/2019 → SPT+ 07/2019 → אורטיקריה 02/2021 → אנפילקסיס 11/2022. IgE ספציפי 3.2 kUA/L. תמונה קלינית חד-משמעית.',
+        diagnosis:'אלרגיה לפניצילין מאושרת — חמורה (Confirmed Severe Penicillin Allergy).',
+        recommendation:'EpiPen × 2 + הדגמה. צמיד זיהוי. תיאום עם רופא שיניים. תיעוד אדום בכל מערכות מאוחדת. פרובוקציה — אינה מומלצת.' }
+    ]
+  },
+  'P002': {
+    dob: '22.07.1985', age: 40, clinic: 'רמת גן', idNum: '034-5678901',
+    lastVisit: '05.03.2024',
+    visits: [
+      { date:'05.03.2024', dept:'רפואת משפחה', dx:'כאבי ראש חוזרים', dr:'ד"ר שרה לוי' },
+      { date:'11.09.2020', dept:'רפואת משפחה', dx:'כאבי בטן — תגובה לאספירין', dr:'ד"ר שרה לוי' }
+    ],
+    meds: [
+      { name:'פנטופרזול 40 מ"ג', note:'פעם ביום — קיבה', icon:'💊', bg:'bg-blue' }
+    ],
+    labs: [
+      { date:'05.03.2024', name:'המוגלובין (Hgb)',    result:'13.2 g/dL',   status:'✓ תקין',  cls:'color:#27AE60' },
+      { date:'05.03.2024', name:'לויקוציטים (WBC)',   result:'6.8 ×10³/µL', status:'✓ תקין',  cls:'color:#27AE60' },
+      { date:'05.03.2024', name:'טסיות (PLT)',         result:'241 ×10³/µL', status:'✓ תקין',  cls:'color:#27AE60' },
+      { date:'05.03.2024', name:'גלוקוז בצום',        result:'88 mg/dL',    status:'✓ תקין',  cls:'color:#27AE60' },
+      { date:'05.03.2024', name:'כולסטרול כולל',      result:'174 mg/dL',   status:'✓ תקין',  cls:'color:#27AE60' },
+      { date:'05.03.2024', name:'LDL כולסטרול',       result:'95 mg/dL',    status:'✓ תקין',  cls:'color:#27AE60' },
+      { date:'05.03.2024', name:'HDL כולסטרול',       result:'62 mg/dL',    status:'✓ תקין',  cls:'color:#27AE60' },
+      { date:'05.03.2024', name:'טריגליצרידים',       result:'88 mg/dL',    status:'✓ תקין',  cls:'color:#27AE60' },
+      { date:'05.03.2024', name:'קריאטינין',          result:'0.82 mg/dL',  status:'✓ תקין',  cls:'color:#27AE60' },
+      { date:'05.03.2024', name:'TSH (בלוטת התריס)',  result:'3.4 µIU/mL',  status:'✓ תקין',  cls:'color:#27AE60' },
+      { date:'05.03.2024', name:'CRP (חלבון תגובתי C)', result:'1.2 mg/L', status:'✓ תקין',  cls:'color:#27AE60' },
+      { date:'05.03.2024', name:'AST (SGOT)',          result:'22 U/L',      status:'✓ תקין',  cls:'color:#27AE60' },
+      { date:'05.03.2024', name:'ALT (SGPT)',          result:'19 U/L',      status:'✓ תקין',  cls:'color:#27AE60' }
+    ],
+    docs: [
+      { id:'D101', date:'10.04.2020', type:'רפואת משפחה', icon:'🏠',
+        title:'כאבי ראש לאחר אספירין', doctor:'ד"ר שרה לוי',
+        complaint:'כאבי ראש שהופיעו לאחר נטילת אספירין 500 מ"ג. המטופלת אינה מדווחת על פריחה, מצוקה נשימתית או נפיחות.',
+        findings:'בדיקה גופנית תקינה. ללא פריחה, ללא מצוקה. לחץ דם 115/72, דופק 76. נוירולוגית תקין.',
+        diagnosis:'רגישות אפשרית לאספירין — לא ניתן לאשר תגובה אלרגית אמיתית בשלב זה.',
+        recommendation:'הימנעות מאספירין. תיעוד כ-"רגישות לאספירין". שימוש בפרצטמול כחלופה.' },
+      { id:'D102', date:'15.02.2024', type:'רפואת משפחה', icon:'🏠',
+        title:'ביקור שגרתי — ללא תלונות', doctor:'ד"ר שרה לוי',
+        complaint:'ביקור שגרתי ללא תלונות פעילות.',
+        findings:'בדיקה גופנית תקינה. בדיקות דם מלאות תקינות. BMI 22.4. לחץ דם 112/70.',
+        diagnosis:'אישה בריאה ללא מחלות רקע פעילות.',
+        recommendation:'המשך מעקב שנתי. הימנעות מאספירין ו-NSAIDs. עדכון חיסון שפעת.' }
+    ]
+  }
+};
+
+/* ═══════════════════════════════════════
+   ROSTER
+═══════════════════════════════════════ */
+function loadPatients() {
+  fetch('/patients')
+    .then(function(r) { return r.json(); })
+    .then(function(patients) {
+      allPatients = patients;
+      document.getElementById('patientCount').textContent =
+        patients.length + ' מטופלים ברשימה';
+      renderRoster(patients);
+
+      patients.forEach(function(p) {
+        fetch('/patients/' + p.patient_id)
+          .then(function(r) { return r.json(); })
+          .then(function(data) { patientRawDocs[p.patient_id] = data.documents || []; });
+      });
+    })
+    .catch(function(e) {
+      document.getElementById('patientTbody').innerHTML =
+        '<tr><td colspan="6" style="text-align:center;padding:20px;color:#C0392B;">שגיאה בטעינת מטופלים</td></tr>';
+    });
+}
+
+function renderRoster(patients) {
+  var tbody = document.getElementById('patientTbody');
+  if (!patients.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#718096;">לא נמצאו מטופלים</td></tr>';
+    return;
+  }
+  tbody.innerHTML = patients.map(function(p) {
+    var ex = extras[p.patient_id] || {};
+    var cached = analysisCache[p.patient_id];
+    var statusHtml = cached
+      ? severityStatusBadge(cached.report.severity)
+      : '<span class="status-dot"><span class="dot dot-warn"></span>טרם נותח</span>';
+
+    return '<tr onclick="openRecord(\'' + p.patient_id + '\')">' +
+      '<td><div class="pt-name">' + esc(p.patient_name) + '</div>' +
+           '<div class="pt-id">ת.ז. ' + esc(ex.idNum || p.patient_id) + '</div></td>' +
+      '<td>' + (ex.age || '—') + '</td>' +
+      '<td><span class="allergy-tag">⚠️ ' + esc(p.reported_allergy) + '</span></td>' +
+      '<td>' + esc(ex.lastVisit || '—') + '</td>' +
+      '<td>' + statusHtml + '</td>' +
+      '<td><button class="open-btn" onclick="event.stopPropagation();openRecord(\'' +
+           p.patient_id + '\')">פתח תיק ←</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+function severityStatusBadge(sev) {
+  var map = {
+    confirmed_severe:   ['dot-alert', 'אושר — חמור'],
+    confirmed_moderate: ['dot-warn',  'אושר — בינוני'],
+    probable:           ['dot-warn',  'סביר'],
+    questionable:       ['dot-ok',    'מפוקפק'],
+    insufficient_data:  ['dot-ok',    'נתונים לא מספיקים']
+  };
+  var m = map[sev] || ['dot-ok', sev];
+  return '<span class="status-dot"><span class="dot ' + m[0] + '"></span>' + m[1] + '</span>';
+}
+
+function filterPatients(q) {
+  if (!q) { renderRoster(allPatients); return; }
+  var lq = q.toLowerCase();
+  renderRoster(allPatients.filter(function(p) {
+    return p.patient_name.toLowerCase().includes(lq) ||
+           p.patient_id.toLowerCase().includes(lq) ||
+           (extras[p.patient_id] || {}).idNum && extras[p.patient_id].idNum.includes(lq);
+  }));
+}
+
+/* ═══════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════ */
+function openRecord(patientId) {
+  var p  = allPatients.find(function(x) { return x.patient_id === patientId; });
+  if (!p) return;
+  var ex = extras[p.patient_id] || {};
+
+  /* Breadcrumb */
+  document.getElementById('breadcrumbName').textContent = p.patient_name;
+
+  /* Banner */
+  var initials = p.patient_name.split(' ').map(function(w) { return w[0]; }).join('');
+  document.getElementById('pbAvatar').textContent = initials;
+  document.getElementById('pbName').textContent   = p.patient_name;
+  document.getElementById('pbMeta').innerHTML =
+    '<span>ת.ז. ' + esc(ex.idNum || p.patient_id) + '</span>' +
+    (ex.dob ? '<span class="pb-sep">|</span><span>תאריך לידה: ' + esc(ex.dob) + '</span>' : '') +
+    (ex.clinic ? '<span class="pb-sep">|</span><span>' + esc(ex.clinic) + '</span>' : '');
+
+  if (p.reported_allergy) {
+    document.getElementById('pbAllergyWarn').style.display = 'flex';
+    document.getElementById('pbAllergyText').textContent = 'אלרגיה: ' + p.reported_allergy;
+  } else {
+    document.getElementById('pbAllergyWarn').style.display = 'none';
+  }
+
+  /* Overview */
+  document.getElementById('overviewContent').innerHTML =
+    '<table style="width:100%;font-size:13px;border-collapse:collapse;">' +
+    row('שם מלא', p.patient_name) +
+    row('ת.ז.', ex.idNum || p.patient_id) +
+    row('תאריך לידה', ex.dob || '—') +
+    row('גיל', ex.age ? ex.age + ' שנים' : '—') +
+    row('מרפאה', ex.clinic || '—') +
+    row('ביקור אחרון', ex.lastVisit || '—') +
+    row('אלרגיות ידועות', '<span style="color:#C0392B;font-weight:700;">⚠️ ' + esc(p.reported_allergy) + '</span>') +
+    '</table>';
+
+  /* Visits */
+  var visits = ex.visits || [];
+  document.getElementById('visitsTbody').innerHTML = visits.map(function(v) {
+    return '<tr><td>' + esc(v.date) + '</td><td>' + esc(v.dept) + '</td>' +
+           '<td>' + esc(v.dx) + '</td><td>' + esc(v.dr) + '</td></tr>';
+  }).join('') || '<tr><td colspan="4" style="text-align:center;color:#718096;padding:20px;">אין ביקורים מתועדים</td></tr>';
+
+  /* Meds */
+  var meds = ex.meds || [];
+  document.getElementById('medsList').innerHTML = meds.map(function(m) {
+    return '<div class="med-row">' +
+      '<div class="med-ico ' + m.bg + '">' + m.icon + '</div>' +
+      '<div style="flex:1"><div style="font-weight:700;font-size:14px;">' + esc(m.name) + '</div>' +
+      '<div style="font-size:12px;color:#718096;margin-top:2px;">' + esc(m.note) + '</div></div>' +
+      '<div style="font-size:12px;color:#27AE60;font-weight:700;">פעיל ✓</div>' +
+      '</div>';
+  }).join('') || '<p style="color:#718096;font-size:13px;">אין תרופות פעילות</p>';
+
+  /* Labs */
+  var labs = ex.labs || [];
+  document.getElementById('labsTbody').innerHTML = labs.map(function(l) {
+    return '<tr><td>' + esc(l.date) + '</td><td>' + esc(l.name) + '</td>' +
+           '<td class="ltr">' + esc(l.result) + '</td>' +
+           '<td><span style="font-weight:700;' + l.cls + '">' + esc(l.status) + '</span></td></tr>';
+  }).join('') || '<tr><td colspan="4" style="text-align:center;color:#718096;padding:20px;">אין בדיקות</td></tr>';
+
+  /* Docs */
+  var docs = ex.docs || [];
+  var _pid = p.patient_id;
+  document.getElementById('docsList').innerHTML = docs.length ? docs.map(function(d) {
+    return '<div style="background:white;border-radius:3px;margin-bottom:10px;' +
+      'box-shadow:0 1px 4px rgba(0,0,0,.1),0 0 0 1px rgba(0,0,0,.06);overflow:hidden;">' +
+      '<div style="background:#F4F6F8;border-bottom:1px solid #E8ECF2;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;">' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+          '<svg width="15" height="15" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">' +
+            '<defs><radialGradient id="ghh" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFCF5C"/><stop offset="100%" stop-color="#F7941D"/></radialGradient></defs>' +
+            '<circle cx="20" cy="20" r="18" fill="url(#ghh)"/>' +
+          '</svg>' +
+          '<span style="font-size:11px;font-weight:800;color:#1A2C3D;">מאוחדת</span>' +
+          '<span style="color:#D0D5DD;font-size:10px;">|</span>' +
+          '<span style="font-size:11px;color:#718096;">' + esc(d.type) + '</span>' +
+        '</div>' +
+        '<span style="font-size:10px;color:#9BA8B5;">' + esc(d.id) + ' · ' + esc(d.date) + '</span>' +
+      '</div>' +
+      '<div style="padding:13px 16px;display:flex;align-items:center;gap:12px;">' +
+        '<div style="font-size:20px;opacity:.15;flex-shrink:0;">📄</div>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:13px;font-weight:800;color:#1A2C3D;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(d.title) + '</div>' +
+          '<div style="font-size:11px;color:#718096;">' + esc(d.doctor) + '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">' +
+          '<span style="font-size:10px;color:#B0BEC5;font-style:italic;">לצפייה בתוכן הורד PDF</span>' +
+          '<button onclick="generateDocPDF(\'' + _pid + '\',\'' + d.id + '\')" ' +
+            'style="display:flex;align-items:center;gap:5px;background:#1A2C3D;color:white;border:none;border-radius:7px;' +
+            'padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;" ' +
+            'onmouseover="this.style.background=\'#29ABE2\'" onmouseout="this.style.background=\'#1A2C3D\'">' +
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
+              '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>' +
+            '</svg>הורד PDF' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('') :
+    '<div class="empty-tab"><div class="et-icon">📄</div><div class="et-title">אין מסמכים</div></div>';
+
+  /* Allergies tab */
+  renderAllergyCards(p);
+  renderPenfastDoctorCard(p);
+
+  /* Switch views */
+  document.getElementById('view-roster').style.display = 'none';
+  document.getElementById('view-record').style.display  = 'block';
+  switchTab('allergies');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function row(lbl, val) {
+  return '<tr style="border-bottom:1px solid #F5F5F5;">' +
+    '<td style="padding:10px 0;color:#718096;width:160px;font-weight:600;">' + lbl + '</td>' +
+    '<td style="padding:10px 0;">' + val + '</td></tr>';
+}
+
+function goBack() {
+  document.getElementById('view-record').style.display  = 'none';
+  document.getElementById('view-roster').style.display  = 'block';
+  renderRoster(allPatients);  /* refresh roster (shows new cached statuses) */
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.tab === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(function(c) {
+    c.classList.toggle('active', c.id === 'tab-' + name);
+  });
+}
+
+/* ═══════════════════════════════════════
+   ALLERGY CARDS
+═══════════════════════════════════════ */
+function renderAllergyCards(patient) {
+  /* Parse allergy list — split by comma/semicolon for future multi-allergy support */
+  var allergyStr = patient.reported_allergy || '';
+  var allergies  = allergyStr.split(/[,;،]/).map(function(a) { return a.trim(); }).filter(Boolean);
+
+  var container = document.getElementById('allergiesList');
+  container.innerHTML = '';
+
+  allergies.forEach(function(allergyName) {
+    var cardId     = 'allergy-' + patient.patient_id + '-' + allergyName.replace(/\s+/g, '_');
+    var resultsId  = 'results-' + cardId;
+    var btnId      = 'btn-'     + cardId;
+    var loadId     = 'load-'    + cardId;
+    var pdfId      = 'pdf-'     + cardId;
+    var errId      = 'err-'     + cardId;
+
+    var cached = analysisCache[patient.patient_id];
+    var statusBadge = cached
+      ? '<span class="allergy-status-badge ' + severityClass(cached.report.severity) + '">' +
+          severityLabel(cached.report.severity) + '</span>'
+      : '<span class="allergy-status-badge status-unvalidated">⚠️ טרם אומת</span>';
+
+    var card = document.createElement('div');
+    card.className = 'allergy-item-card' + (cached ? ' has-results' : '');
+    card.id = cardId;
+    card.innerHTML =
+      '<div class="allergy-item-header">' +
+        '<div class="allergy-icon-wrap">💊</div>' +
+        '<div style="flex:1">' +
+          '<div class="allergy-name">' + esc(allergyName) + '</div>' +
+          '<div class="allergy-sub" id="sub-' + cardId + '">' +
+            'אלרגיה מדווחת · בדיקת אמינות נדרשת' +
+          '</div>' +
+        '</div>' +
+        statusBadge +
+        '<div class="allergy-actions">' +
+          '<span class="loading-inline" id="' + loadId + '">⏳ מנתח...</span>' +
+          '<button class="analyze-btn" id="' + btnId + '" ' +
+            'onclick="runAllergyAnalysis(\'' + patient.patient_id + '\',\'' + cardId + '\')">' +
+            (cached ? '🔄 נתח מחדש' : '🔬 נתח ואמת') +
+          '</button>' +
+          '<a class="pdf-link ' + (cached ? '' : 'hidden') + '" id="' + pdfId + '" ' +
+            'href="/analyze/demo/' + patient.patient_id + '/pdf" target="_blank">📄 PDF</a>' +
+        '</div>' +
+      '</div>' +
+      '<div class="error-box" id="' + errId + '"><strong>שגיאה:</strong><pre></pre></div>' +
+      '<div class="allergy-results ' + (cached ? 'visible' : '') + '" id="' + resultsId + '">' +
+        (cached ? buildResultsHtml(cached, patient.patient_id) : '') +
+      '</div>';
+
+    container.appendChild(card);
+  });
+}
+
+function runAllergyAnalysis(patientId, cardId) {
+  var btnId    = 'btn-'  + cardId;
+  var loadId   = 'load-' + cardId;
+  var pdfId    = 'pdf-'  + cardId;
+  var errId    = 'err-'  + cardId;
+  var resId    = 'results-' + cardId;
+
+  document.getElementById(btnId).disabled = true;
+  document.getElementById(loadId).style.display = 'inline';
+  document.getElementById(errId).style.display  = 'none';
+
+  fetch('/analyze/demo/' + patientId)
+    .then(function(r) {
+      if (!r.ok) return r.text().then(function(t) { throw new Error(t); });
+      return r.json();
+    })
+    .then(function(data) {
+      analysisCache[patientId] = data;
+
+      /* Update status badge */
+      var header = document.getElementById(cardId).querySelector('.allergy-status-badge');
+      if (header) {
+        header.className = 'allergy-status-badge ' + severityClass(data.report.severity);
+        header.textContent = severityLabel(data.report.severity);
+      }
+
+      /* Update sub-label */
+      var sub = document.getElementById('sub-' + cardId);
+      if (sub) sub.textContent = 'נותח בהצלחה · ' + new Date().toLocaleDateString('he-IL');
+
+      /* Render results */
+      var resEl = document.getElementById(resId);
+      resEl.innerHTML = buildResultsHtml(data, patientId);
+      resEl.classList.add('visible');
+
+      /* Mark card */
+      document.getElementById(cardId).classList.add('has-results');
+
+      /* PDF link */
+      document.getElementById(pdfId).classList.remove('hidden');
+
+      /* Update button text */
+      document.getElementById(btnId).textContent = '🔄 נתח מחדש';
+
+      /* Refresh roster status dots */
+      renderRoster(allPatients);
+    })
+    .catch(function(e) {
+      var errEl = document.getElementById(errId);
+      errEl.style.display = 'block';
+      errEl.querySelector('pre').textContent = e.message;
+    })
+    .finally(function() {
+      document.getElementById(btnId).disabled = false;
+      document.getElementById(loadId).style.display = 'none';
+    });
+}
+
+/* ═══════════════════════════════════════
+   BUILD RESULTS HTML
+═══════════════════════════════════════ */
+function buildResultsHtml(data, patientId) {
+  var r    = data.report;
+  var docs = data.analyzed_documents || [];
+
+  var sevLabels = {
+    confirmed_severe:   '🔴 CONFIRMED SEVERE — אושר חמור',
+    confirmed_moderate: '🟠 CONFIRMED MODERATE — אושר בינוני',
+    probable:           '🟡 PROBABLE ALLERGY — אלרגיה סבירה',
+    questionable:       '🔵 QUESTIONABLE — לא מאושר',
+    insufficient_data:  '⚪ INSUFFICIENT DATA — נתונים לא מספיקים'
+  };
+
+  /* Stats */
+  var statsHtml = '<div class="stats-row">' +
+    statBox(r.total_documents_reviewed,     'מסמכים שנבדקו') +
+    statBox(r.relevant_documents_count,     'רלוונטיים') +
+    statBox(r.allergist_visits,             'ביקורי אלרגולוג') +
+    statBox(r.dermatologist_visits,         'ביקורי עור') +
+    statBox(r.er_or_hospitalization_events, 'חירום / אשפוז') +
+    '</div>';
+
+  /* Conditions + symptoms */
+  var conds = r.confirmed_conditions || [];
+  var syms  = r.reported_symptoms    || [];
+  var condHtml =
+    '<div class="result-section">' +
+    '<div class="result-section-title">📋 מצבים ותסמינים</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="ltr">' +
+    '<div><p style="font-size:11px;font-weight:800;color:#F7941D;margin-bottom:8px;">DIAGNOSES</p>' +
+    '<ul style="padding-left:18px;font-size:13px;line-height:1.9;">' +
+    (conds.length ? conds.map(function(c){ return '<li>'+esc(c)+'</li>'; }).join('') : '<li style="color:#718096">None documented</li>') +
+    '</ul></div>' +
+    '<div><p style="font-size:11px;font-weight:800;color:#F7941D;margin-bottom:8px;">SYMPTOMS</p>' +
+    '<ul style="padding-left:18px;font-size:13px;line-height:1.9;">' +
+    (syms.length ? syms.map(function(s){ return '<li>'+esc(s)+'</li>'; }).join('') : '<li style="color:#718096">None documented</li>') +
+    '</ul></div>' +
+    '</div></div>';
+
+  /* Timeline */
+  var tl = (r.timeline || []).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+  var tlHtml = tl.length ? '<div class="result-section">' +
+    '<div class="result-section-title">📅 ציר זמן קליני</div>' +
+    tl.map(function(t) {
+      return '<div class="timeline-item">' +
+        '<div class="tl-dot"></div>' +
+        '<div class="tl-date">' + esc(t.date) + '</div>' +
+        '<div><div class="tl-event">' + esc(t.event) + '</div>' +
+        '<div class="tl-doc">' + esc(t.doc_id) + '</div></div>' +
+        '</div>';
+    }).join('') + '</div>' : '';
+
+  /* Flags */
+  var flags   = r.flags || [];
+  var flagHtml = flags.length ? '<div class="result-section">' +
+    '<div class="result-section-title">🚨 דגלים אדומים</div>' +
+    '<ul class="flags-list">' +
+    flags.map(function(f){ return '<li><span>🚨</span><span>'+esc(f)+'</span></li>'; }).join('') +
+    '</ul></div>' : '';
+
+  /* Recommendation */
+  var recHtml = r.doctor_recommendation
+    ? '<div class="result-section"><div class="result-section-title">💡 המלצה לרופא המטפל</div>' +
+      '<div class="recommendation">' + esc(r.doctor_recommendation) + '</div></div>'
+    : '';
+
+  /* Source docs */
+  var rawDocs  = patientRawDocs[patientId] || [];
+  var rawIndex = {};
+  rawDocs.forEach(function(d) { rawIndex[d.doc_id] = d; });
+
+  var relevant = docs.filter(function(d){ return d.relevance==='high'||d.relevance==='medium'; })
+                     .sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+  var docsHtml = relevant.length ? '<div class="result-section">' +
+    '<div class="result-section-title">📄 מסמכי מקור רלוונטיים</div>' +
+    relevant.map(function(ad) {
+      var raw     = rawIndex[ad.doc_id] || {};
+      var content = raw.content || '';
+      var excerpt = content.length > 200 ? content.slice(0, 200) + '...' : content;
+      var badge   = ad.relevance==='high' ? '<span class="badge-high">HIGH</span>' : '<span class="badge-med">MED</span>';
+      var signals = (ad.allergy_signals||[]).length
+        ? '<div class="signals">Signals: '+esc((ad.allergy_signals||[]).join(', '))+'</div>' : '';
+      var excerptHtml = excerpt
+        ? '<div class="excerpt">'+esc(ad.doc_id)+': '+esc(excerpt)+'</div>' : '';
+      return '<div class="doc-card">' +
+        '<div class="doc-header"><span class="doc-id">['+esc(ad.doc_id)+']</span>' +
+        '<span class="doc-date">'+esc(ad.date)+'</span>' +
+        '<span style="font-size:12px;color:#718096">'+esc(ad.source)+'</span>'+badge+'</div>' +
+        '<div style="font-size:13px;">'+esc(ad.summary)+'</div>'+signals+excerptHtml+'</div>';
+    }).join('') + '</div>' : '';
+
+  return '<div class="severity-badge ' + esc(r.severity) + '">' +
+           esc(sevLabels[r.severity] || r.severity) + '</div>' +
+         '<p class="ltr" style="font-size:13px;color:#555;margin-bottom:8px;">' +
+           esc(r.severity_explanation || '') + '</p>' +
+         statsHtml + condHtml + tlHtml + flagHtml + recHtml + docsHtml;
+}
+
+function statBox(num, lbl) {
+  return '<div class="stat-box"><div class="num">' + esc(num) +
+         '</div><div class="lbl">' + esc(lbl) + '</div></div>';
+}
+
+/* ═══════════════════════════════════════
+   SEVERITY HELPERS
+═══════════════════════════════════════ */
+function severityClass(sev) {
+  return { confirmed_severe:'status-severe', confirmed_moderate:'status-moderate',
+           probable:'status-probable', questionable:'status-ok', insufficient_data:'status-ok' }[sev] || 'status-unvalidated';
+}
+function severityLabel(sev) {
+  return { confirmed_severe:'🔴 אושר — חמור', confirmed_moderate:'🟠 אושר — בינוני',
+           probable:'🟡 אלרגיה סבירה', questionable:'🔵 מפוקפק', insufficient_data:'⚪ נתונים לא מספיקים' }[sev] || sev;
+}
+
+/* ═══════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════ */
+function esc(val) {
+  if (val === null || val === undefined) return '';
+  return String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* Boot */
+loadPatients();
+
+/* ═══════════════════════════════════════
+   USER SWITCHER
+═══════════════════════════════════════ */
+var currentUser = 'doctor';
+
+function toggleUserMenu() {
+  document.getElementById('userMenu').classList.toggle('open');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#userSwitcher')) {
+    document.getElementById('userMenu').classList.remove('open');
+  }
+});
+
+function switchUser(role) {
+  currentUser = role;
+  document.getElementById('userMenu').classList.remove('open');
+
+  if (role === 'patient') {
+    document.body.classList.add('patient-mode');
+    document.getElementById('userSwitchLabel').textContent = 'דוד כהן';
+    document.getElementById('menuDoctor').classList.remove('active');
+    document.getElementById('menuPatient').classList.add('active');
+    document.getElementById('headerName').textContent = 'דוד כהן';
+    document.getElementById('headerRole').textContent = 'מטופל · מספר חבר 052-1234567';
+    document.getElementById('headerAvatar').textContent = 'ד';
+
+    document.getElementById('view-roster').style.display  = 'none';
+    document.getElementById('view-record').style.display  = 'none';
+    document.getElementById('view-heatmap').style.display = 'none';
+    document.getElementById('view-patient').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (role === 'heatmap') {
+    document.body.classList.remove('patient-mode');
+    document.getElementById('userSwitchLabel').textContent = 'מנהל מחוז';
+    document.getElementById('menuDoctor').classList.remove('active');
+    document.getElementById('menuPatient').classList.remove('active');
+    document.getElementById('menuHeatmap').classList.add('active');
+    document.getElementById('headerName').textContent = 'מנהל מחוז';
+    document.getElementById('headerRole').textContent = 'ניתוח אוכלוסייה · מאוחדת';
+    document.getElementById('headerAvatar').textContent = 'מ';
+    document.getElementById('view-roster').style.display  = 'none';
+    document.getElementById('view-record').style.display  = 'none';
+    document.getElementById('view-patient').style.display = 'none';
+    document.getElementById('view-heatmap').style.display = 'block';
+    renderHeatmap();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    document.getElementById('menuHeatmap').classList.remove('active');
+    document.body.classList.remove('patient-mode');
+    document.getElementById('userSwitchLabel').textContent = 'ד"ר שרה לוי';
+    document.getElementById('menuDoctor').classList.add('active');
+    document.getElementById('menuPatient').classList.remove('active');
+    document.getElementById('headerName').textContent = 'ד"ר שרה לוי';
+    document.getElementById('headerRole').textContent = 'רפואת משפחה · מרפאה מרכזית תל אביב';
+    document.getElementById('headerAvatar').textContent = 'ש';
+
+    document.getElementById('view-patient').style.display = 'none';
+    document.getElementById('view-heatmap').style.display = 'none';
+    document.getElementById('view-record').style.display = 'none';
+    document.getElementById('view-roster').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+/* ═══════════════════════════════════════
+   PENFAST MODAL
+═══════════════════════════════════════ */
+function openPenfastModal() {
+  document.getElementById('penfastSuccess').style.display = 'none';
+  document.getElementById('penfastForm').style.display = 'block';
+  document.getElementById('penfastModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePenfastModal() {
+  document.getElementById('penfastModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('penfastModal').addEventListener('click', function(e) {
+  if (e.target === this) closePenfastModal();
+});
+
+function pfUpdate() {
+  var answered = ['pf1','pf2','pf3','pf4','pf5'].filter(function(name) {
+    return document.querySelector('input[name="' + name + '"]:checked');
+  }).length;
+
+  for (var i = 1; i <= 5; i++) {
+    var s = document.getElementById('pstep' + i);
+    if (s) s.classList.toggle('done', i <= answered);
+  }
+
+  document.getElementById('pfSubmitBtn').disabled = (answered < 5);
+}
+
+/* ═══════════════════════════════════════
+   GENERATE MEDICAL PDF DOCUMENT
+═══════════════════════════════════════ */
+function generateDocPDF(patientId, docId) {
+  var p  = allPatients.find(function(x) { return x.patient_id === patientId; });
+  var ex = extras[patientId] || {};
+  var d  = (ex.docs || []).find(function(x) { return x.id === docId; });
+  if (!p || !d) return;
+
+  var clinicMap = {
+    'רפואת משפחה': 'מרפאת רפואת משפחה — תל אביב מרכז',
+    'אלרגולוגיה':  'מרפאת אלרגולוגיה ואימונולוגיה',
+    'עור ומין':    'מרפאת עור ומין — תל אביב',
+    'חדר מיון':   'מרכז רפואי מאוחדת — חדר מיון',
+    'בדיקות מעבדה':'מעבדה מרכזית — מאוחדת'
+  };
+  var clinic = clinicMap[d.type] || d.type;
+
+  var stamp = '<div style="width:96px;height:96px;border:3px double #1A3A5C;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;transform:rotate(-12deg);opacity:.65;">' +
+    '<div style="font-size:7.5px;font-weight:800;color:#1A3A5C;line-height:1.6;">' +
+      '<div style="font-size:10px;font-weight:900;">מאוחדת</div>' +
+      '<div style="border-top:1px solid #1A3A5C;border-bottom:1px solid #1A3A5C;padding:1px 4px;margin:2px 0;">' + d.type + '</div>' +
+      '<div>ת"א &middot; ' + d.date + '</div>' +
+    '</div>' +
+  '</div>';
+
+  var html = '<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="UTF-8"><title>' + d.id + '</title><style>' +
+    '@page{size:A4;margin:0}' +
+    'body{font-family:Arial,"Segoe UI",sans-serif;direction:rtl;color:#1A1A1A;margin:0;padding:0;background:white;font-size:13px}' +
+    '.pg{width:210mm;min-height:297mm;padding:18mm 20mm 24mm;box-sizing:border-box;position:relative}' +
+    '.hdr{border-bottom:3px solid #1A2C3D;padding-bottom:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-start}' +
+    '.logo{font-size:28px;font-weight:900;color:#F7941D;letter-spacing:-1px}' +
+    '.logo-sub{font-size:10px;color:#555;margin-top:2px}' +
+    '.clinic-name{font-size:13px;font-weight:800;color:#1A2C3D;text-align:left}' +
+    '.clinic-sub{font-size:10px;color:#718096;text-align:left;margin-top:2px}' +
+    '.title-bar{background:#1A2C3D;color:white;margin:0 -20mm;padding:10px 20mm;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}' +
+    '.pt-box{border:1.5px solid #CBD5E0;border-radius:6px;padding:12px 16px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}' +
+    '.lbl{font-size:10px;font-weight:700;color:#718096;display:block;margin-bottom:2px}' +
+    '.val{font-size:13px;font-weight:700;color:#1A2C3D}' +
+    '.sec{margin-bottom:18px}' +
+    '.sec-t{font-size:10.5px;font-weight:800;color:#F7941D;letter-spacing:.5px;text-transform:uppercase;border-bottom:1.5px solid #F7941D;padding-bottom:4px;margin-bottom:9px}' +
+    '.sec-b{font-size:12.5px;line-height:1.85;color:#2C2C2C;text-align:justify}' +
+    '.diag{font-weight:700;font-style:italic}' +
+    '.ftr{position:absolute;bottom:18mm;left:20mm;right:20mm;border-top:1.5px solid #CBD5E0;padding-top:14px;display:flex;justify-content:space-between;align-items:flex-end}' +
+    '.sig-line{width:140px;border-top:1px solid #1A2C3D;margin-bottom:5px}' +
+    '.wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-28deg);font-size:90px;font-weight:900;color:rgba(41,171,226,.035);pointer-events:none;white-space:nowrap}' +
+    '@media print{.np{display:none}}' +
+  '</style></head><body>' +
+
+  '<div class="wm">מאוחדת</div>' +
+  '<button class="np" onclick="window.print()" style="position:fixed;top:16px;left:16px;background:#1A2C3D;color:white;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;z-index:999;">🖨 הדפס / שמור PDF</button>' +
+
+  '<div class="pg">' +
+    '<div class="hdr">' +
+      '<div><div class="logo">מאוחדת</div><div class="logo-sub">שירותי בריאות של קופת חולים מאוחדת</div></div>' +
+      '<div><div class="clinic-name">' + clinic + '</div><div class="clinic-sub">מס׳ מסמך: ' + d.id + ' &nbsp;| תאריך: ' + d.date + '</div></div>' +
+    '</div>' +
+    '<div class="title-bar">' +
+      '<div><div style="font-size:10px;font-weight:700;opacity:.7;letter-spacing:.5px">' + d.type + '</div><div style="font-size:17px;font-weight:900;margin-top:2px">' + d.title + '</div></div>' +
+      '<div style="font-size:11px;opacity:.6">' + d.id + '</div>' +
+    '</div>' +
+    '<div class="pt-box">' +
+      '<div><span class="lbl">שם מלא</span><span class="val">' + p.patient_name + '</span></div>' +
+      '<div><span class="lbl">מס׳ ת.ז.</span><span class="val">' + (ex.idNum || p.patient_id) + '</span></div>' +
+      '<div><span class="lbl">תאריך לידה</span><span class="val">' + (ex.dob || '—') + '</span></div>' +
+      '<div><span class="lbl">גיל</span><span class="val">' + (ex.age || '—') + ' שנים</span></div>' +
+      '<div><span class="lbl">רופא מטפל</span><span class="val">' + d.doctor + '</span></div>' +
+      '<div><span class="lbl">תאריך ביקור</span><span class="val">' + d.date + '</span></div>' +
+    '</div>' +
+    '<div class="sec"><div class="sec-t">תלונות המטופל / סיבת הפנייה</div><div class="sec-b">' + (d.complaint||'—') + '</div></div>' +
+    '<div class="sec"><div class="sec-t">ממצאים קליניים</div><div class="sec-b">' + (d.findings||'—') + '</div></div>' +
+    '<div class="sec"><div class="sec-t">אבחנה</div><div class="sec-b diag">' + (d.diagnosis||'—') + '</div></div>' +
+    '<div class="sec"><div class="sec-t">המלצות וטיפול</div><div class="sec-b">' + (d.recommendation||'—') + '</div></div>' +
+    '<div class="ftr">' +
+      '<div><div class="sig-line"></div><div style="font-size:12px;font-weight:700">' + d.doctor + '</div><div style="font-size:10px;color:#718096">' + d.type + ' &middot; מאוחדת</div></div>' +
+      stamp +
+    '</div>' +
+  '</div></body></html>';
+
+  var win = window.open('','_blank','width=860,height=1100');
+  win.document.write(html);
+  win.document.close();
+}
+function submitPenfast() {
+  /* Capture answers before hiding form */
+  var answers = {};
+  ['pf1','pf2','pf3','pf4','pf5'].forEach(function(name) {
+    var el = document.querySelector('input[name="' + name + '"]:checked');
+    if (el) answers[name] = el.value;
+  });
+  penfastStore['P001'] = { submittedAt: new Date().toLocaleDateString('he-IL'), answers: answers };
+  initWorkflow('P001', answers);
+
+  document.getElementById('penfastForm').style.display = 'none';
+  document.getElementById('penfastSuccess').style.display = 'block';
+
+  setTimeout(function() {
+    var alertEl = document.getElementById('penfastAlert');
+    if (alertEl) alertEl.style.display = 'none';
+    var done = document.getElementById('penfastCompleted');
+    if (done) done.style.display = 'flex';
+
+    var heroBtn = document.getElementById('heroPenfastBtn');
+    if (heroBtn) heroBtn.style.display = 'none';
+    var heroDone = document.getElementById('heroPenfastDone');
+    if (heroDone) heroDone.style.display = 'block';
+
+    /* Refresh doctor card if record is open */
+    var openP = allPatients.find(function(x) { return x.patient_id === 'P001'; });
+    if (openP && document.getElementById('view-record').style.display !== 'none') {
+      renderPenfastDoctorCard(openP);
+    }
+  }, 400);
+}
+
+/* ═══════════════════════════════════════
+   PENFAST DOCTOR CARD
+═══════════════════════════════════════ */
+var PF_ANSWER_LABELS = {
+  pf1: { anaphylaxis:'אנפילקסיס', angioedema:'אנגיואדמה', urticaria:'אורטיקריה / פריחה', other:'תגובה אחרת' },
+  pf2: { yes:'כן', no:'לא', unsure:'לא בטוח/ה' },
+  pf3: { epinephrine:'זריקת אדרנלין (EpiPen)', antihistamine:'אנטיהיסטמין / קורטיזון', none:'לא נדרש טיפול' },
+  pf4: { hospitalized:'אושפזתי', er:'פניתי לחדר מיון', no:'לא' },
+  pf5: { recent:'פחות מ-5 שנים', old:'יותר מ-5 שנים', unknown:'לא זוכר/ת' }
+};
+var PF_QUESTIONS = [
+  { key:'pf1', label:'תגובה אלרגית עיקרית' },
+  { key:'pf2', label:'חום בזמן התגובה' },
+  { key:'pf3', label:'טיפול רפואי שניתן' },
+  { key:'pf4', label:'פנייה לחדר מיון / אשפוז' },
+  { key:'pf5', label:'זמן מאז החשיפה האחרונה' }
+];
+
+/* ═══════════════════════════════════════
+   WORKFLOW ENGINE
+═══════════════════════════════════════ */
+function calculatePenfastScore(answers) {
+  var s = 0;
+  if      (answers.pf1 === 'anaphylaxis') s += 3;
+  else if (answers.pf1 === 'angioedema')  s += 2;
+  else if (answers.pf1 === 'urticaria')   s += 1;
+  if      (answers.pf3 === 'epinephrine')    s += 2;
+  else if (answers.pf3 === 'antihistamine')  s += 1;
+  if      (answers.pf4 === 'hospitalized') s += 2;
+  else if (answers.pf4 === 'er')           s += 1;
+  if      (answers.pf5 === 'recent')  s += 2;
+  else if (answers.pf5 === 'unknown') s += 1;
+  var risk = s <= 2 ? 'low' : s <= 5 ? 'moderate' : 'high';
+  return { score: s, max: 8, risk: risk };
+}
+
+function initWorkflow(patientId, answers) {
+  var calc = calculatePenfastScore(answers);
+  var stage;
+  if (calc.risk === 'high' || calc.risk === 'moderate') {
+    stage = 'referred_allergist';
+  } else {
+    stage = 'cross_reference';  /* low risk: cross-check medical record */
+  }
+  workflowState[patientId] = {
+    stage:    stage,
+    score:    calc.score,
+    risk:     calc.risk,
+    scoredAt: new Date().toLocaleDateString('he-IL')
+  };
+}
+
+function advanceWorkflow(patientId, action) {
+  var ws = workflowState[patientId];
+  if (!ws) return;
+  var today = new Date().toLocaleDateString('he-IL');
+  if (action === 'doctor_approve') {
+    ws.stage = 'approved';
+    ws.approvedAt = today;
+  } else if (action === 'schedule_challenge') {
+    ws.stage = 'challenge_scheduled';
+    ws.challengeDate = ws.proposedDate || today;
+  } else if (action === 'challenge_pass') {
+    ws.stage = 'label_removed';
+    ws.challengePassedAt = today;
+  } else if (action === 'challenge_fail') {
+    ws.stage = 'referred_allergist';
+  }
+  /* Re-render doctor card if a patient is open */
+  var open = document.getElementById('view-record');
+  if (open && open.style.display !== 'none') {
+    var p = allPatients.find(function(x) {
+      return x.patient_id === patientId;
+    });
+    if (p) { renderPenfastDoctorCard(p); }
+  }
+  renderPatientChallengeCard();
+}
+
+function renderPatientChallengeCard() {
+  var card = document.getElementById('challengeCard');
+  if (!card) return;
+  var ws = workflowState['P001'];
+  if (!ws) { card.style.display = 'none'; return; }
+
+  if (ws.stage === 'approved') {
+    card.style.display = 'block';
+    document.getElementById('challengeCardBody').innerHTML =
+      '<p style="margin:0 0 14px;font-size:14px;color:#374151;line-height:1.7;">' +
+        'ד"ר שרה לוי אישרה שאת/ה מועמד/ת לתגר פומי בקהילה. ' +
+        'ניתן לבחור מועד נוח במרפאת השכונה שלך.' +
+      '</p>' +
+      '<div style="display:flex;gap:10px;">' +
+        '<button class="wf-btn wf-btn-primary" style="flex:1;padding:11px;" onclick="advanceWorkflow(\'P001\',\'schedule_challenge\')">' +
+          '📅 קביעת תאריך לתגר פומי' +
+        '</button>' +
+      '</div>';
+  } else if (ws.stage === 'challenge_scheduled') {
+    card.style.display = 'block';
+    document.getElementById('challengeCardBody').innerHTML =
+      '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+        '<span style="font-size:32px;">✅</span>' +
+        '<div>' +
+          '<div style="font-weight:800;font-size:15px;color:#065F46;margin-bottom:4px;">התגר נקבע!</div>' +
+          '<div style="font-size:13px;color:#374151;line-height:1.7;">' +
+            'התגר הפומי נקבע. עליך להגיע בצום חלקי (4 שעות) למרפאת הקהילה. ' +
+            'אחות תבצע הערכה קצרה לפני שתתחיל.' +
+          '</div>' +
+          '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">' +
+            '<span style="background:#D1FAE5;color:#065F46;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;">📍 מרפאת שכונה</span>' +
+            '<span style="background:#EFF6FF;color:#1D4ED8;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;">⏰ 08:00–12:00</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  } else if (ws.stage === 'label_removed') {
+    card.style.display = 'block';
+    document.getElementById('challengeCardBody').innerHTML =
+      '<div style="text-align:center;padding:10px 0;">' +
+        '<div style="font-size:40px;margin-bottom:8px;">🎉</div>' +
+        '<div style="font-weight:900;font-size:16px;color:#065F46;margin-bottom:6px;">תגר עבר בהצלחה!</div>' +
+        '<div style="font-size:13px;color:#555;">תווית האלרגיה לפניצילין הוסרה מהתיק הרפואי שלך.</div>' +
+      '</div>';
+  } else {
+    card.style.display = 'none';
+  }
+}
+function renderPenfastDoctorCard(p) {
+  var container = document.getElementById('penfastDoctorSection');
+  if (!container) return;
+
+  var submission = penfastStore[p.patient_id];
+  var hasPenicillin = (p.reported_allergy || '').includes('פניצילין');
+  if (!submission || !hasPenicillin) { container.innerHTML = ''; return; }
+
+  var a  = submission.answers;
+  var ws = workflowState[p.patient_id] || {};
+  var calc = calculatePenfastScore(a);
+  var score = calc.score; var max = calc.max; var risk = calc.risk;
+
+  /* Score bar colour */
+  var barColor = risk === 'low' ? '#27AE60' : risk === 'moderate' ? '#F39C12' : '#E74C3C';
+  var riskLabel = risk === 'low' ? 'סיכון נמוך' : risk === 'moderate' ? 'סיכון בינוני' : 'סיכון גבוה';
+  var riskClass = risk === 'low' ? 'risk-low' : risk === 'moderate' ? 'risk-mod' : 'risk-high';
+  var riskIcon  = risk === 'low' ? '✓' : '⚠️';
+
+  /* Pipeline stages: depends on risk + workflow stage */
+  var stages = [
+    { key:'questionnaire', label:'שאלון\nPenFAST' },
+    { key:'scored',        label:'ניקוד\nוסיווג' },
+    { key:'cross_ref',     label:'הצלבת\nמידע' },
+    { key:'approved',      label:'אישור\nרופא' },
+    { key:'challenge',     label:'תגר\nפומי' }
+  ];
+
+  var stageMap = {
+    referred_allergist: ['done','done','danger','',''],
+    cross_reference:    ['done','done','active','',''],
+    doctor_review:      ['done','done','done','active',''],
+    approved:           ['done','done','done','done','active'],
+    challenge_scheduled:['done','done','done','done','active'],
+    label_removed:      ['done','done','done','done','done']
+  };
+  var activeMap = stageMap[ws.stage] || ['done','done','active','',''];
+
+  var pipelineHtml = '<div class="pipeline">' + stages.map(function(st, i) {
+    var cls = activeMap[i] || '';
+    var icon = cls === 'done' ? '✓' : cls === 'danger' ? '✕' : cls === 'active' ? '●' : '○';
+    return '<div class="ps ' + cls + '">' +
+      '<div class="ps-dot">' + icon + '</div>' +
+      '<div class="ps-lbl">' + st.label.replace('\n', '<br>') + '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+
+  /* Answer rows */
+  var rows = PF_QUESTIONS.map(function(q) {
+    var val = a[q.key] || '—';
+    var label = (PF_ANSWER_LABELS[q.key] || {})[val] || val;
+    var isHigh = (q.key==='pf1' && val==='anaphylaxis') ||
+                 (q.key==='pf3' && val==='epinephrine') ||
+                 (q.key==='pf4' && val==='hospitalized');
+    return '<tr style="border-bottom:1px solid #F0F4F8;">' +
+      '<td style="padding:9px 14px;font-size:12px;color:#718096;font-weight:600;width:55%;">' + esc(q.label) + '</td>' +
+      '<td style="padding:9px 14px;font-size:13px;font-weight:700;color:' + (isHigh ? '#C0392B' : '#1A2C3D') + ';">' +
+        (isHigh ? '⚠️ ' : '') + esc(label) +
+      '</td></tr>';
+  }).join('');
+
+  /* Action banner based on current stage */
+  var banner = '';
+  var stage = ws.stage || 'cross_reference';
+
+  if (stage === 'referred_allergist') {
+    banner = '<div class="wf-banner wf-banner-danger">' +
+      '<div><div style="font-weight:800;font-size:13px;color:#991B1B;">🔴 הפנייה לאלרגולוג / בית חולים</div>' +
+        '<div style="font-size:12px;color:#7F1D1D;margin-top:3px;">ציון גבוה — מטופל זה אינו מועמד לתגר קהילתי</div></div>' +
+      '<button class="wf-btn wf-btn-danger" onclick="alert(\'הפנייה נוצרה במערכת המאוחדת\')">צור הפנייה</button>' +
+    '</div>';
+  } else if (stage === 'cross_reference') {
+    banner = '<div class="wf-banner wf-banner-info">' +
+      '<div><div style="font-weight:800;font-size:13px;color:#1D4ED8;">🔍 הצלבת מידע — בתהליך</div>' +
+        '<div style="font-size:12px;color:#1E40AF;margin-top:3px;">בודק סתירות ודגלים אדומים בתיק הרפואי…</div></div>' +
+      '<button class="wf-btn wf-btn-primary" onclick="advanceWorkflow(\'' + p.patient_id + '\',\'doctor_approve\')">אשר למסלול קהילתי</button>' +
+    '</div>';
+  } else if (stage === 'approved') {
+    banner = '<div class="wf-banner wf-banner-success">' +
+      '<div><div style="font-weight:800;font-size:13px;color:#065F46;">✅ אושר למסלול תגר קהילתי</div>' +
+        '<div style="font-size:12px;color:#047857;margin-top:3px;">אושר ב-' + (ws.approvedAt || '') + ' — המטופל קיבל הודעה לקביעת תור</div></div>' +
+      '<button class="wf-btn wf-btn-success" onclick="advanceWorkflow(\'' + p.patient_id + '\',\'challenge_pass\')">תגר עבר ✓</button>' +
+    '</div>';
+  } else if (stage === 'challenge_scheduled') {
+    banner = '<div class="wf-banner wf-banner-warn">' +
+      '<div><div style="font-weight:800;font-size:13px;color:#92400E;">📅 תגר קהילתי מתוכנן</div>' +
+        '<div style="font-size:12px;color:#78350F;margin-top:3px;">המטופל קבע תאריך לתגר</div></div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<button class="wf-btn wf-btn-success" onclick="advanceWorkflow(\'' + p.patient_id + '\',\'challenge_pass\')">תגר עבר ✓</button>' +
+        '<button class="wf-btn wf-btn-danger"  onclick="advanceWorkflow(\'' + p.patient_id + '\',\'challenge_fail\')">תגר נכשל ✕</button>' +
+      '</div>' +
+    '</div>';
+  } else if (stage === 'label_removed') {
+    banner = '<div class="wf-banner wf-banner-success">' +
+      '<div style="font-weight:800;font-size:13px;color:#065F46;">🎉 תווית האלרגיה הוסרה מהתיק</div></div>';
+  }
+
+  container.innerHTML =
+    '<div class="card" style="border:2px solid ' + barColor + ';margin-top:0;">' +
+      '<div class="card-title" style="flex-wrap:wrap;gap:8px;">' +
+        '<div class="card-icon">📋</div>' +
+        'שאלון PenFAST — מסלול מטופל' +
+        '<span style="margin-right:auto;font-size:11px;color:#718096;font-weight:500;">הוגש: ' + esc(submission.submittedAt) + '</span>' +
+        '<span class="risk-chip ' + riskClass + '">' + riskIcon + ' ' + riskLabel + '</span>' +
+      '</div>' +
+      /* Score bar */
+      '<div style="padding:0 16px 4px;">' +
+        '<div class="pf-score-row">' +
+          '<span style="font-size:11px;font-weight:700;color:#718096;">ציון PenFAST</span>' +
+          '<div class="pf-score-bar"><div class="pf-score-fill" style="width:' + Math.round(score/max*100) + '%;background:' + barColor + ';"></div></div>' +
+          '<span style="font-size:13px;font-weight:800;color:' + barColor + ';">' + score + '/' + max + '</span>' +
+        '</div>' +
+      '</div>' +
+      /* Pipeline */
+      '<div style="padding:0 16px 6px;">' + pipelineHtml + '</div>' +
+      /* Answer table */
+      '<table style="width:100%;border-collapse:collapse;border-top:1px solid #F0F4F8;">' +
+        '<thead><tr style="background:#F8FAFC;">' +
+          '<th style="padding:8px 14px;text-align:right;font-size:11px;color:#94A3B8;font-weight:700;">שאלה</th>' +
+          '<th style="padding:8px 14px;text-align:right;font-size:11px;color:#94A3B8;font-weight:700;">תשובה</th>' +
+        '</tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>' +
+      /* Action banner */
+      '<div style="padding:0 16px 16px;">' + banner + '</div>' +
+    '</div>';
+}
+
+/* ═══════════════════════════════════════
+   HEAT MAP DATA & RENDERING
+═══════════════════════════════════════ */
+var HM_DATA = [
+  { city:'תל אביב',        region:'מרכז',    total:1243, low:847,  mod:278,  high:118, x:326, y:849  },
+  { city:'פתח תקווה',      region:'מרכז',    total:891,  low:623,  mod:201,  high:67,  x:394, y:848  },
+  { city:'חיפה',            region:'צפון',    total:734,  low:512,  mod:157,  high:65,  x:458, y:346  },
+  { city:'ירושלים',         region:'ירושלים', total:698,  low:489,  mod:154,  high:55,  x:601, y:1075 },
+  { city:'ראשון לציון',    region:'מרכז',    total:556,  low:394,  mod:118,  high:44,  x:338, y:929  },
+  { city:'נתניה',           region:'שרון',    total:521,  low:378,  mod:101,  high:42,  x:376, y:673  },
+  { city:'אשדוד',           region:'דרום',    total:498,  low:356,  mod:101,  high:41,  x:245, y:1049 },
+  { city:'רמת גן',          region:'מרכז',    total:412,  low:298,  mod:88,   high:26,  x:347, y:851  },
+  { city:'חולון',           region:'מרכז',    total:398,  low:287,  mod:84,   high:27,  x:324, y:903  },
+  { city:'באר שבע',         region:'דרום',    total:334,  low:234,  mod:72,   high:28,  x:332, y:1442 },
+  { city:'הרצליה',          region:'שרון',    total:289,  low:201,  mod:63,   high:25,  x:366, y:794  },
+  { city:'בת ים',            region:'מרכז',    total:267,  low:189,  mod:54,   high:24,  x:306, y:898  },
+  { city:'אשקלון',          region:'דרום',    total:245,  low:171,  mod:52,   high:22,  x:194, y:1145 },
+  { city:'נהריה',           region:'צפון',    total:198,  low:143,  mod:38,   high:17,  x:525, y:195  },
+  { city:'כפר סבא',         region:'שרון',    total:187,  low:134,  mod:36,   high:17,  x:406, y:784  }
+];
+
+var hmFilter = 'all';
+
+function setHmFilter(f) {
+  hmFilter = f;
+  document.querySelectorAll('.hm-filter-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent === {all:'הכל',low:'סיכון נמוך',moderate:'סיכון בינוני',high:'סיכון גבוה'}[f]);
+  });
+  renderHmGrid();
+  renderHmMap();
+}
+
+function renderHeatmap() {
+  /* Stats */
+  var totals = HM_DATA.reduce(function(acc,d) {
+    acc.total += d.total; acc.low += d.low; acc.mod += d.mod; acc.high += d.high; return acc;
+  }, {total:0,low:0,mod:0,high:0});
+  document.getElementById('hmTotalStat').textContent = totals.total.toLocaleString();
+  document.getElementById('hmLowStat').textContent   = totals.low.toLocaleString();
+  document.getElementById('hmModStat').textContent   = totals.mod.toLocaleString();
+  document.getElementById('hmHighStat').textContent  = totals.high.toLocaleString();
+  document.getElementById('hmPctStat').textContent   = Math.round(totals.low / totals.total * 100) + '%';
+  renderHmGrid();
+  renderHmMap();
+}
+
+function renderHmGrid() {
+  var maxLow = Math.max.apply(null, HM_DATA.map(function(d){return d.low;}));
+  var html = HM_DATA.map(function(d) {
+    var pctHigh = Math.round(d.high / d.total * 100);
+    var pctMod  = Math.round(d.mod  / d.total * 100);
+    var pctLow  = 100 - pctHigh - pctMod;
+    var intensity = Math.round(d.low / maxLow * 100);
+    var borderColor = intensity > 75 ? '#F7941D' : intensity > 40 ? '#FCD34D' : '#E2E8F0';
+    var showVal = hmFilter === 'low' ? d.low : hmFilter === 'moderate' ? d.mod : hmFilter === 'high' ? d.high : d.total;
+    var showLbl = hmFilter === 'low' ? 'סיכון נמוך' : hmFilter === 'moderate' ? 'סיכון בינוני' : hmFilter === 'high' ? 'סיכון גבוה' : 'סה"כ';
+    return '<div class="hm-card" onclick="highlightCity(\'' + d.city + '\')" id="hmcard-' + d.city + '">' +
+      '<div class="hm-card-city">' + d.city + '</div>' +
+      '<div class="hm-card-region">' + d.region + '</div>' +
+      '<div class="hm-bar-wrap">' +
+        '<div class="hm-bar-seg" style="width:' + pctHigh + '%;background:#EF4444;border-radius:0;"></div>' +
+        '<div class="hm-bar-seg" style="width:' + pctMod  + '%;background:#F59E0B;border-radius:0;"></div>' +
+        '<div class="hm-bar-seg" style="width:' + pctLow  + '%;background:#22C55E;"></div>' +
+      '</div>' +
+      '<div class="hm-bar-labels"><span>' + pctHigh + '% גבוה</span><span>' + pctLow + '% נמוך</span></div>' +
+      '<div style="margin-top:10px;display:flex;justify-content:space-between;align-items:flex-end;">' +
+        '<div><div class="hm-count-low">' + pctLow + '%</div><div style="font-size:10px;color:#9CA3AF;font-weight:600;">' + d.low.toLocaleString() + ' מועמדים לתגר</div></div>' +
+        '<div style="text-align:left;"><div style="font-size:12px;font-weight:700;color:#374151;">' + d.total.toLocaleString() + '</div><div style="font-size:10px;color:#9CA3AF;font-weight:600;">סה"כ</div></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  document.getElementById('hmGrid').innerHTML = html;
+}
+
+function renderHmMap() {
+  var maxLow = Math.max.apply(null, HM_DATA.map(function(d){return d.low;}));
+  var bubblesHtml = '';
+  var labelsHtml  = '';
+  HM_DATA.forEach(function(d) {
+    var val = hmFilter === 'low' ? d.low : hmFilter === 'moderate' ? d.mod : hmFilter === 'high' ? d.high : d.low;
+    var r   = Math.max(25, Math.round(val / maxLow * 65));
+    var col = hmFilter === 'high' ? '#EF4444' : hmFilter === 'moderate' ? '#F59E0B' : '#22C55E';
+    var opacity = 0.35 + (val / maxLow) * 0.55;
+    bubblesHtml += '<circle cx="' + d.x + '" cy="' + d.y + '" r="' + r + '" fill="' + col + '" opacity="' + opacity.toFixed(2) + '" stroke="white" stroke-width="5" style="cursor:pointer" onclick="highlightCity(\'' + d.city + '\')" />';
+    if (r >= 38) {
+      labelsHtml += '<text x="' + d.x + '" y="' + (d.y + r + 35) + '" text-anchor="middle" font-size="38" font-weight="700" fill="#1A2C3D" font-family="Arial">' + d.city + '</text>';
+    }
+  });
+  document.getElementById('mapBubbles').innerHTML = bubblesHtml;
+  document.getElementById('mapLabels').innerHTML  = labelsHtml;
+}
+
+function highlightCity(city) {
+  document.querySelectorAll('.hm-card').forEach(function(c) { c.classList.remove('selected'); });
+  var card = document.getElementById('hmcard-' + city);
+  if (card) { card.classList.add('selected'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+}
+</script>
+
+<!-- ════════════════════════════════════════
+     VIEW: HEAT MAP
+════════════════════════════════════════ -->
+<div id="view-heatmap" style="display:none;">
+
+  <!-- Header -->
+  <div class="hm-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="font-size:11px;font-weight:700;opacity:.55;letter-spacing:.8px;margin-bottom:4px;">מנהל מחוז · מאוחדת</div>
+        <div style="font-size:22px;font-weight:900;">מפת חום — לייבלים לאלרגיה לפניצילין</div>
+        <div style="font-size:12px;opacity:.65;margin-top:4px;">מטופלים עם תיעוד אלרגיה לפניצילין / אמוקסיצילין / אוגמנטין — לפי עיר ורמת סיכון</div>
+      </div>
+      <div style="font-size:11px;opacity:.5;">עדכון אחרון: יוני 2025</div>
+    </div>
+    <div class="hm-stats" id="hmStats">
+      <div class="hm-stat">
+        <div class="hm-stat-n" id="hmTotalStat">0</div>
+        <div class="hm-stat-l">סה"כ מזוהים עם לייבל</div>
+      </div>
+      <div class="hm-stat">
+        <div class="hm-stat-n" style="color:#86EFAC;" id="hmLowStat">0</div>
+        <div class="hm-stat-l">סיכון נמוך — מועמדים לתגר</div>
+      </div>
+      <div class="hm-stat">
+        <div class="hm-stat-n" style="color:#FCD34D;" id="hmModStat">0</div>
+        <div class="hm-stat-l">סיכון בינוני — מעקב</div>
+      </div>
+      <div class="hm-stat">
+        <div class="hm-stat-n" style="color:#FCA5A5;" id="hmHighStat">0</div>
+        <div class="hm-stat-l">סיכון גבוה — הפניה</div>
+      </div>
+      <div class="hm-stat">
+        <div class="hm-stat-n" style="color:#67E8F9;" id="hmPctStat">0%</div>
+        <div class="hm-stat-l">% מועמדים לביטול לייבל</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="hm-body">
+
+    <!-- SVG Map -->
+    <div class="hm-map">
+      <div class="hm-map-title">מפת ישראל — פיזור גיאוגרפי</div>
+      <div class="hm-legend">
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#22C55E;"></div>סיכון נמוך</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#F59E0B;"></div>סיכון בינוני</div>
+        <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#EF4444;"></div>סיכון גבוה</div>
+      </div>
+      <svg id="israelMap" viewBox="0 0 1000 2686.6" width="100%" style="max-height:420px;">
+        <!-- Israel outline -->
+        <path d="M0.0,1406.1 L69.7,1336.1 L147.5,1239.7 L216.2,1132.1 L249.4,1065.8 L247.7,1055.0 L249.5,1041.9 L250.6,1048.3 L256.9,1046.5 L266.3,1032.3 L289.9,977.6 L313.1,901.8 L322.1,890.4 L336.8,846.4 L364.1,750.6 L396.0,609.7 L393.7,602.4 L398.3,597.9 L413.7,528.2 L422.4,445.7 L433.3,427.9 L438.6,357.3 L455.4,348.7 L475.6,354.9 L476.1,361.8 L482.3,362.9 L501.0,342.9 L513.4,305.3 L512.8,291.6 L504.7,290.4 L527.2,193.7 L527.5,168.7 L560.9,173.4 L571.5,169.8 L581.9,174.5 L592.0,164.8 L608.1,170.0 L641.2,159.0 L646.8,164.2 L655.2,161.5 L658.9,176.1 L681.7,197.1 L722.1,188.7 L731.7,171.2 L764.9,170.6 L765.8,155.3 L783.0,144.5 L780.1,135.4 L789.0,96.3 L786.1,73.4 L791.8,69.0 L792.0,56.6 L802.1,43.5 L804.1,31.7 L814.3,37.5 L814.4,48.0 L822.7,56.8 L834.0,62.3 L836.6,44.1 L849.5,38.5 L859.4,42.1 L868.6,29.1 L886.1,21.7 L896.4,4.4 L907.8,7.7 L926.9,0.0 L950.7,13.0 L930.9,43.8 L951.7,63.3 L953.2,92.0 L965.3,99.6 L969.3,117.4 L953.7,145.2 L953.1,154.3 L972.9,163.0 L985.4,247.3 L1000.0,272.9 L974.0,311.0 L970.3,352.5 L956.3,379.5 L937.7,391.6 L910.1,422.5 L870.8,440.6 L868.1,454.7 L831.5,458.1 L824.2,466.9 L826.7,477.9 L803.6,487.4 L805.9,513.2 L810.5,516.1 L809.8,547.1 L800.2,557.9 L804.0,565.3 L800.5,572.0 L802.1,582.5 L811.7,592.7 L805.7,596.6 L803.1,607.0 L807.9,612.7 L798.8,632.2 L800.0,652.9 L793.9,656.6 L802.1,672.2 L796.4,707.2 L803.9,734.1 L799.2,745.0 L806.5,762.9 L803.3,769.3 L807.7,787.1 L803.2,791.1 L807.2,798.6 L800.7,802.6 L797.2,820.9 L800.9,826.7 L793.4,834.8 L789.6,856.0 L784.3,858.4 L791.5,876.6 L776.3,906.4 L780.9,930.3 L788.7,934.4 L785.6,943.0 L792.2,953.6 L790.3,980.8 L778.9,997.2 L785.4,1016.0 L793.5,1022.2 L788.7,1033.2 L793.3,1047.7 L789.6,1068.2 L794.6,1075.4 L792.5,1085.3 L798.7,1102.4 L768.3,1099.4 L753.6,1130.7 L736.8,1144.1 L725.1,1195.3 L712.9,1212.8 L715.9,1235.8 L707.5,1249.6 L703.5,1272.7 L705.1,1286.5 L748.9,1285.0 L749.7,1288.6 L747.3,1338.8 L740.5,1372.3 L708.2,1435.3 L703.8,1455.4 L710.7,1484.9 L733.6,1522.0 L736.9,1559.0 L719.8,1600.6 L714.1,1666.3 L700.7,1683.3 L687.2,1683.3 L676.9,1696.2 L663.4,1729.1 L662.5,1743.0 L669.1,1760.9 L666.6,1772.6 L657.3,1774.6 L652.8,1793.0 L642.3,1799.5 L637.6,1824.6 L640.9,1833.0 L633.2,1835.6 L623.1,1869.4 L598.5,1897.8 L587.5,1924.0 L580.9,1982.1 L562.3,2022.9 L564.6,2050.6 L580.2,2088.9 L558.1,2116.5 L552.9,2133.5 L556.0,2189.1 L552.1,2216.1 L558.1,2222.4 L556.2,2230.2 L562.5,2245.1 L556.1,2273.0 L552.7,2286.9 L543.2,2288.4 L527.0,2319.3 L535.0,2334.0 L524.7,2337.1 L518.8,2356.3 L511.5,2363.0 L515.6,2367.8 L512.0,2381.7 L516.1,2410.7 L500.7,2442.1 L491.9,2478.8 L483.6,2490.3 L472.9,2541.9 L477.5,2571.1 L452.9,2625.9 L452.2,2650.1 L438.7,2645.9 L407.8,2686.6 L393.3,2649.9 L386.1,2611.9 L393.3,2578.1 L381.2,2550.2 L372.7,2485.4 L362.0,2464.4 L235.6,2074.2 L193.0,2042.0 L189.0,2029.5 L198.7,1982.3 L176.9,1957.8 L178.6,1909.5 L164.5,1852.8 L110.0,1731.0 L13.0,1426.8 L0.0,1406.1 Z"
+              fill="#E8EEF4" stroke="#CBD5E0" stroke-width="6"/>
+        <!-- Bubbles injected by JS -->
+        <g id="mapBubbles"></g>
+        <!-- City labels injected by JS -->
+        <g id="mapLabels"></g>
+      </svg>
+    </div>
+
+    <!-- Cards grid -->
+    <div class="hm-detail">
+      <div class="hm-filters" id="hmFilters">
+        <span style="font-size:12px;font-weight:700;color:#374151;margin-left:4px;">סנן:</span>
+        <button class="hm-filter-btn active" onclick="setHmFilter('all')">הכל</button>
+        <button class="hm-filter-btn" onclick="setHmFilter('low')">סיכון נמוך</button>
+        <button class="hm-filter-btn" onclick="setHmFilter('moderate')">סיכון בינוני</button>
+        <button class="hm-filter-btn" onclick="setHmFilter('high')">סיכון גבוה</button>
+      </div>
+      <div class="hm-grid" id="hmGrid"></div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

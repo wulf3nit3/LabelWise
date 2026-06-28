@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  allergy-validator:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MOCK_MODE=${MOCK_MODE:-false}
+      - PYTHONIOENCODING=utf-8
+    # No volumes — stateless, no medical data persisted to disk
+    restart: unless-stopped
